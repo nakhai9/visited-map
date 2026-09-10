@@ -1,0 +1,77 @@
+:root {
+  /* Bốn tông màu hệ thống - mirror của src/theme/tokens.ts */
+  --vp-white: #ffffff;
+  --vp-paper: #edefee;
+  --vp-clay: #d08856;
+  --vp-lacquer: #aa210f;
+  --vp-charcoal: #41403c;
+
+  /* Token dẫn xuất */
+  --vp-background: var(--vp-white);
+  --vp-surface: var(--vp-paper);
+  --vp-text-primary: var(--vp-charcoal);
+  --vp-text-secondary: rgba(65, 64, 60, 0.68);
+  --vp-border: rgba(65, 64, 60, 0.16);
+  --vp-border-strong: rgba(65, 64, 60, 0.32);
+  --vp-overlay: rgba(65, 64, 60, 0.56);
+
+  --vp-radius: 8px;
+  --vp-header-height: 64px;
+
+  color-scheme: light;
+  font-family: "Be Vietnam Pro", "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reset tối thiểu - phần còn lại do CssBaseline của MUI lo */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--vp-background);
+  color: var(--vp-text-primary);
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: var(--vp-lacquer);
+  text-decoration: none;
+}
+
+::selection {
+  background-color: rgba(208, 136, 86, 0.28);
+}
+
+/* Scrollbar theo hệ màu */
+* {
+  scrollbar-color: var(--vp-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--vp-border-strong);
+  border: 3px solid var(--vp-background);
+  border-radius: 999px;
+}
