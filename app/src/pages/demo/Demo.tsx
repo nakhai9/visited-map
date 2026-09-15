@@ -1,13 +1,23 @@
 import { Grid } from "@mui/material";
-import VietnamMapChart from "../../components/VietnamMapChart";
+import { useState } from "react";
+import VietnamMapChart, {
+  type StateEvent,
+} from "../../components/VietnamMapChart";
 import Layout from "../container/Layout";
 
 export default function Demo() {
+  const [states, setStates] = useState<StateEvent[]>([]);
   return (
     <Layout>
       <Grid spacing={2} container>
-        <Grid size={12}>
-          <VietnamMapChart />
+        <Grid size={{ sm: 6, xs: 12 }}>
+          <VietnamMapChart onChange={(states) => setStates(states)} />
+        </Grid>
+        <Grid size={{ sm: 6, xs: 12 }}>
+          Visited State
+          {states.map((s) => (
+            <>{s.name}</>
+          ))}
         </Grid>
       </Grid>
     </Layout>
