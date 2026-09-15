@@ -4,7 +4,7 @@ import * as echarts from "echarts";
 import ReactECharts from "echarts-for-react";
 import { useEffect, useState } from "react";
 
-const GEO_URL = `/raw/34/vn-34.json`;
+const GEO_URL = `/raw/34/vn34.json`;
 const MAP_NAME = "vietnam";
 
 const SIZE = 760;
