@@ -112,11 +112,11 @@ export default function VietnamMapChart() {
   };
 
   const onEvents = {
-    click: (params: any) => {},
-    mouseover: (params: any) => {
+    click: (_params: any) => {},
+    mouseover: (_params: any) => {
       //   console.log("Hover:", params.name);
     },
-    mouseout: (params: any) => {
+    mouseout: (_params: any) => {
       //   console.log("Leave:", params.name);
     },
   };
