@@ -99,7 +99,7 @@ export default function MapView({ onChange }: MapViewProps) {
             show: showLabel,
           },
           roam: true,
-          scaleLimit: { min: 1, max: 4 },
+          scaleLimit: { min: 1, max: 10 },
           data: states,
           itemStyle: {
             borderWidth: 1,
