@@ -3,19 +3,20 @@ import {
   Checkbox,
   FormControlLabel,
   IconButton,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   Typography,
+  type SelectChangeEvent,
 } from "@mui/material";
 import type { EChartsOption } from "echarts";
 import * as echarts from "echarts";
 import ReactECharts from "echarts-for-react";
 import { ArrowDownToLine, Camera, RotateCcw, Share2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { COUNTRIES_OPTIONS } from "./../pages/demo/constant";
 import { useToast } from "./../shared/components/BaseToast/toast";
-
-const GEO_URL = `/countries/world.json`;
-const MAP_NAME = "vietnam";
 
 const SIZE = 560;
 const WIDTH = SIZE;
@@ -59,21 +60,25 @@ export default function MapView({ onChange }: MapViewProps) {
   const [selectedProvinces, setSelectedProvinces] = useState<StateEvent[]>([]);
   const [showLabel, setShowLabel] = useState(false);
   const showToast = useToast((state) => state.showToast);
+  const [countryCode, setCountryCode] = useState("world");
 
   const chartRef = useRef<ReactECharts>(null);
 
-  const fecthAndRegisterGeoData = async () => {
+  const fecthAndRegisterGeoData = useCallback(async () => {
     try {
-      const response = await fetch(GEO_URL);
-      if (!response.ok) throw new Error(`HTTP ${response.status} — ${GEO_URL}`);
+      const response = await fetch(`/countries/${countryCode}.json`);
+      if (!response.ok)
+        throw new Error(
+          `HTTP ${response.status} — ${`/countries/${countryCode}.json`}`,
+        );
       const data = await response.json();
 
-      echarts.registerMap(MAP_NAME, data);
+      echarts.registerMap(countryCode, data);
       setState(data.features.map((x: any) => x.properties) || []);
     } catch (error) {
       console.error("Error", error);
     }
-  };
+  }, [countryCode]);
 
   const chartOptions: EChartsOption = useMemo(
     () => ({
@@ -93,7 +98,7 @@ export default function MapView({ onChange }: MapViewProps) {
       series: [
         {
           type: "map",
-          map: MAP_NAME,
+          map: countryCode,
           aspectScale: 1,
           label: {
             show: showLabel,
@@ -106,9 +111,6 @@ export default function MapView({ onChange }: MapViewProps) {
             borderColor: "#FFFFFF",
             areaColor: COLORS.inactive,
           },
-
-          layoutCenter: ["50%", "50%"],
-          layoutSize: "100%",
 
           selectedMode: "multiple",
 
@@ -138,7 +140,7 @@ export default function MapView({ onChange }: MapViewProps) {
         },
       ],
     }),
-    [showLabel, states],
+    [showLabel, states, countryCode],
   );
 
   const handleDownload = () => {
@@ -223,8 +225,9 @@ export default function MapView({ onChange }: MapViewProps) {
   };
 
   useEffect(() => {
+    setReady(false);
     fecthAndRegisterGeoData().then(() => setReady(true));
-  }, []);
+  }, [countryCode]);
 
   return (
     <Stack
@@ -234,6 +237,62 @@ export default function MapView({ onChange }: MapViewProps) {
       }}
       spacing={4}
     >
+      <Select
+        fullWidth
+        value={countryCode}
+        onChange={(event: SelectChangeEvent) =>
+          setCountryCode(event.target.value)
+        }
+        renderValue={(selected) => {
+          const selectedCountry = COUNTRIES_OPTIONS.find(
+            (c) => c.value === selected,
+          );
+          if (!selectedCountry) return null;
+          return (
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {selectedCountry.flag && (
+                <Box
+                  component="img"
+                  src={`https://flags.restcountries.com/v5/svg/${selectedCountry.flag}.svg`}
+                  alt="description"
+                  sx={{
+                    width: 20,
+                    border: "1px solid #ddd",
+                    mr: 1,
+                    flexShrink: 0,
+                    display: "block",
+                  }}
+                />
+              )}
+              <Box component="span">{selectedCountry.label}</Box>
+            </Box>
+          );
+        }}
+      >
+        {COUNTRIES_OPTIONS.map((c) => (
+          <MenuItem
+            key={c.value}
+            value={c.value}
+            sx={{ display: "flex", alignItems: "center" }}
+          >
+            {c.flag && (
+              <Box
+                component="img"
+                src={`https://flags.restcountries.com/v5/svg/${c.flag}.svg`}
+                alt="description"
+                sx={{
+                  width: 20,
+                  border: "1px solid #ddd",
+                  mr: 1,
+                  flexShrink: 0,
+                  display: "block",
+                }}
+              />
+            )}
+            {c.label}
+          </MenuItem>
+        ))}
+      </Select>
       <Paper
         elevation={4}
         sx={{
@@ -246,6 +305,7 @@ export default function MapView({ onChange }: MapViewProps) {
       >
         {ready && (
           <ReactECharts
+            key={countryCode}
             option={chartOptions}
             style={{ height: "100%", width: "100%" }}
             onEvents={onEvents}
