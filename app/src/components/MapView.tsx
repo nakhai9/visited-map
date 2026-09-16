@@ -352,7 +352,7 @@ export default function MapView({ onChange }: MapViewProps) {
           sx={{
             height: {
               xs: MIN_HEIGHT,
-              sm: 420,
+              sm: 560,
               md: HEIGHT,
             },
             width: "100%",
