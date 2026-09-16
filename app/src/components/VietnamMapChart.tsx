@@ -12,6 +12,7 @@ import * as echarts from "echarts";
 import ReactECharts from "echarts-for-react";
 import { ArrowDownToLine, Camera, RotateCcw, Share2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useToast } from "./../shared/components/BaseToast/toast";
 
 const GEO_URL = `/raw/34/vn34.json`;
 const MAP_NAME = "vietnam";
@@ -56,6 +57,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
   const [states, setState] = useState([]);
   const [selectedProvinces, setSelectedProvinces] = useState<StateEvent[]>([]);
   const [showLabel, setShowLabel] = useState(false);
+  const showToast = useToast((state) => state.showToast);
 
   const chartRef = useRef<ReactECharts>(null);
 
@@ -84,10 +86,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
         trigger: "item",
         formatter: (params: any) => {
           const p = params.data as ProvinceProperties | undefined;
-          if (!p?.ten_tinh) return "Chưa có dữ liệu";
-
-          // Trả về HTML String thuần
-          return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh}</div>`;
+          return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh || p?.name || "Chưa có dữ liệu"}</div>`;
         },
       },
       series: [
@@ -108,6 +107,9 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
             areaColor: COLORS.inactive,
           },
 
+          layoutCenter: ["50%", "50%"],
+          layoutSize: "100%",
+
           selectedMode: "multiple",
 
           emphasis: {
@@ -125,6 +127,12 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
           select: {
             label: {
               show: showLabel,
+              color: showLabel ? "#FFFFFF" : "#475569",
+              z: 10,
+              textShadowColor: "rgba(0, 0, 0, 0.4)",
+              textShadowBlur: 4,
+              textShadowOffsetX: 1,
+              textShadowOffsetY: 1,
             },
             itemStyle: {
               areaColor: COLORS.active,
@@ -159,20 +167,21 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
     if (!chart) return;
 
     setShowLabel(false);
+    setSelectedProvinces([]);
 
-    // Reset zoom + vị trí bản đồ
     chart.dispatchAction({
       type: "restore",
     });
 
-    // Bỏ toàn bộ tỉnh đang selected
     chart.dispatchAction({
       type: "mapUnSelect",
       seriesIndex: 0,
     });
 
-    // Reset state React
-    setSelectedProvinces([]);
+    showToast({
+      message: "Làm mới thành công",
+      severity: "success",
+    });
   };
 
   const onEvents = {
@@ -225,7 +234,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
     >
       <Paper
         elevation={2}
-        sx={{ height: HEIGHT, width: WIDTH, bgcolor: "#F4F4FD" }}
+        sx={{ height: HEIGHT, width: "100%", bgcolor: "#F4F4FD" }}
       >
         {ready && (
           <ReactECharts
@@ -271,7 +280,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
           }}
           onClick={handleDownload}
         >
-          Download
+          Tải xuống
         </Button>
 
         <Button
@@ -287,7 +296,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
             alignSelf: "flex-start",
           }}
         >
-          Screenshot
+          Chụp ảnh
         </Button>
 
         <Button
@@ -303,7 +312,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
             alignSelf: "flex-start",
           }}
         >
-          Share
+          Chia sẻ
         </Button>
         <Button
           size="small"
@@ -318,7 +327,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
             alignSelf: "flex-start",
           }}
         >
-          Reset Map
+          Làm mới
         </Button>
       </Stack>
     </Stack>

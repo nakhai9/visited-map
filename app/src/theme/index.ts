@@ -1,6 +1,35 @@
 import type { Shadows } from "@mui/material/styles";
-import { createTheme } from "@mui/material/styles";
+import { createTheme, darken, lighten } from "@mui/material/styles";
 import { PALETTE, RADIUS, TOKENS } from "./tokens";
+
+const mui = createTheme();
+
+type AlertSeverity = "success" | "error" | "warning" | "info";
+
+// Tái tạo đúng công thức phối màu gốc của MuiAlert (xem Alert.js: getColor/getBackgroundColor),
+// nhưng lấy màu từ bảng màu mặc định của MUI (`mui`) thay vì palette 4 tông của app.
+const alertSeverityStyle = (severity: AlertSeverity, variant: "standard" | "outlined" | "filled") => {
+  const c = mui.palette[severity];
+  switch (variant) {
+    case "standard":
+      return {
+        color: darken(c.light, 0.6),
+        backgroundColor: lighten(c.light, 0.9),
+        "& .MuiAlert-icon": { color: c.main },
+      };
+    case "outlined":
+      return {
+        color: darken(c.light, 0.6),
+        border: `1px solid ${c.light}`,
+        "& .MuiAlert-icon": { color: c.main },
+      };
+    case "filled":
+      return {
+        backgroundColor: c.main,
+        color: mui.palette.getContrastText(c.main),
+      };
+  }
+};
 
 /**
  * Các slot semantic của MUI (error / warning / info / success) đều được map về
@@ -143,6 +172,14 @@ const theme = createTheme({
       styleOverrides: { root: { color: PALETTE.lacquer, fontWeight: 600 } },
     },
     MuiDivider: { styleOverrides: { root: { borderColor: TOKENS.border } } },
+    MuiAlert: {
+      styleOverrides: {
+        root: ({ ownerState }) => {
+          const severity = (ownerState.color ?? ownerState.severity) as AlertSeverity;
+          return alertSeverityStyle(severity, ownerState.variant ?? "standard");
+        },
+      },
+    },
   },
 });
 
