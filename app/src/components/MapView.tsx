@@ -1,6 +1,7 @@
 import {
   Box,
   Checkbox,
+  CircularProgress,
   FormControlLabel,
   IconButton,
   MenuItem,
@@ -13,7 +14,13 @@ import {
 import type { EChartsOption } from "echarts";
 import * as echarts from "echarts";
 import ReactECharts from "echarts-for-react";
-import { ArrowDownToLine, Camera, RotateCcw, Share2 } from "lucide-react";
+import {
+  ArrowDownToLine,
+  Camera,
+  ChartPie,
+  RotateCcw,
+  Share2,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { COUNTRIES_OPTIONS } from "./../pages/demo/constant";
 import { useToast } from "./../shared/components/BaseToast/toast";
@@ -61,6 +68,7 @@ export default function MapView({ onChange }: MapViewProps) {
   const [showLabel, setShowLabel] = useState(false);
   const showToast = useToast((state) => state.showToast);
   const [countryCode, setCountryCode] = useState("world");
+  const [isShowStats, setIsShowStats] = useState(false);
 
   const chartRef = useRef<ReactECharts>(null);
 
@@ -156,7 +164,7 @@ export default function MapView({ onChange }: MapViewProps) {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "ban-do-viet-nam.png";
+    link.download = `image-${new Date().getTime()}`;
     link.click();
 
     showToast({
@@ -224,6 +232,41 @@ export default function MapView({ onChange }: MapViewProps) {
     },
   };
 
+  const noSelection = !selectedProvinces.length;
+
+  const MAP_ACTIONS = [
+    {
+      icon: Camera,
+      onClick: undefined,
+      disabled: noSelection,
+      isHidden: true,
+    },
+    {
+      icon: Share2,
+      onClick: undefined,
+      disabled: noSelection,
+      isHidden: true,
+    },
+    {
+      icon: RotateCcw,
+      onClick: handleReset,
+      color: "#ef4444",
+      isHidden: false,
+    },
+    {
+      icon: ArrowDownToLine,
+      onClick: handleDownload,
+      disabled: noSelection,
+      isHidden: false,
+    },
+    {
+      icon: ChartPie,
+      onClick: () => setIsShowStats(!isShowStats),
+      disabled: false,
+      isHidden: false,
+    },
+  ];
+
   useEffect(() => {
     setReady(false);
     fecthAndRegisterGeoData().then(() => setReady(true));
@@ -240,9 +283,10 @@ export default function MapView({ onChange }: MapViewProps) {
       <Select
         fullWidth
         value={countryCode}
-        onChange={(event: SelectChangeEvent) =>
-          setCountryCode(event.target.value)
-        }
+        onChange={(event: SelectChangeEvent) => {
+          setCountryCode(event.target.value);
+          setSelectedProvinces([]);
+        }}
         renderValue={(selected) => {
           const selectedCountry = COUNTRIES_OPTIONS.find(
             (c) => c.value === selected,
@@ -293,81 +337,99 @@ export default function MapView({ onChange }: MapViewProps) {
           </MenuItem>
         ))}
       </Select>
-      <Paper
-        elevation={4}
+      <Box
         sx={{
-          height: HEIGHT,
           width: "100%",
-          bgcolor: "#F4F4FD",
-          position: "relative",
-          border: "1px solid #e5e7eb",
         }}
       >
-        {ready && (
-          <ReactECharts
-            key={countryCode}
-            option={chartOptions}
-            style={{ height: "100%", width: "100%" }}
-            onEvents={onEvents}
-            ref={chartRef}
-          />
-        )}
-
-        <Box
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          Chạm để chọn một tỉnh, thành — kéo và chụm hai ngón để phóng to bản
+          đồ.
+        </Typography>
+        <Paper
+          elevation={4}
           sx={{
+            height: HEIGHT,
+            width: "100%",
+            bgcolor: "#F4F4FD",
+            position: "relative",
+            border: "1px solid #e5e7eb",
             display: "flex",
-            flexDirection: "column",
-            gap: 4,
-            zIndex: 99,
-            position: "absolute",
-            top: 10,
-            right: 8,
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <IconButton
-            size="medium"
-            disabled={Boolean(!selectedProvinces.length)}
+          {ready ? (
+            <ReactECharts
+              key={countryCode}
+              option={chartOptions}
+              style={{ height: "100%", width: "100%" }}
+              onEvents={onEvents}
+              ref={chartRef}
+            />
+          ) : (
+            <CircularProgress aria-label="Loading…" />
+          )}
+          <Box
             sx={{
-              bgcolor: "#FFFFFF",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              zIndex: 99,
+              position: "absolute",
+              top: 10,
+              right: 8,
             }}
           >
-            <Camera />
-          </IconButton>
-          <IconButton
-            size="medium"
-            disabled={Boolean(!selectedProvinces.length)}
-            sx={{
-              bgcolor: "#FFFFFF",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <Share2 />
-          </IconButton>
-          <IconButton
-            size="medium"
-            onClick={handleReset}
-            sx={{
-              bgcolor: "#FFFFFF",
-              color: "#ef4444",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <RotateCcw />
-          </IconButton>
-          <IconButton
-            size="medium"
-            disabled={Boolean(!selectedProvinces.length)}
-            sx={{
-              bgcolor: "#FFFFFF",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-            }}
-            onClick={handleDownload}
-          >
-            <ArrowDownToLine />
-          </IconButton>
-        </Box>
-      </Paper>
+            {MAP_ACTIONS.map(
+              ({ icon: Icon, onClick, disabled, color, isHidden }, i) => (
+                <IconButton
+                  key={i}
+                  size="medium"
+                  onClick={onClick}
+                  disabled={disabled}
+                  sx={{
+                    bgcolor: "#FFFFFF",
+                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                    ...(color && { color }),
+                    display: isHidden ? "none" : "block",
+                  }}
+                >
+                  <Icon size={16} />
+                </IconButton>
+              ),
+            )}
+          </Box>
+          {isShowStats && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 10,
+                left: 8,
+                width: 8,
+                height: 100,
+                borderRadius: 99,
+                bgcolor: "#E4E4F5",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "flex-end",
+                zIndex: 99,
+              }}
+            >
+              <Box
+                sx={{
+                  width: "100%",
+                  height: `${(selectedProvinces.length * 100) / states.filter((s: any) => !["hoang_sa", "truong_sa"].includes(s.codename)).length}%`,
+                  borderRadius: 99,
+                  background:
+                    "linear-gradient(180deg, #6355E0 0%, #0E9C86 100%)",
+                  transition: "height 0.4s cubic-bezier(0.3, 0.8, 0.3, 1)",
+                }}
+              />
+            </Box>
+          )}
+        </Paper>
+      </Box>
 
       <Box>
         <FormControlLabel

@@ -9,12 +9,12 @@ export default function Demo() {
   return (
     <Layout>
       <Grid spacing={2} container>
-        <Grid size={{ sm: 2, xs: 12 }}></Grid>
-        <Grid size={{ sm: 8, xs: 12 }}>
-          <Box sx={{ height: { xs: 12, sm: 24, md: 56 } }}></Box>
+        <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
+        <Grid size={{ md: 6, sm: 10, xs: 12 }}>
+          <Box sx={{ height: { xs: 12, sm: 24 } }}></Box>
           <MapView onChange={(states) => setStates(states)} />
         </Grid>
-        <Grid size={{ sm: 2, xs: 12 }}></Grid>
+        <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
       </Grid>
     </Layout>
   );
