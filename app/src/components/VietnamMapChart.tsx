@@ -158,6 +158,8 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
 
     if (!chart) return;
 
+    setShowLabel(false);
+
     // Reset zoom + vị trí bản đồ
     chart.dispatchAction({
       type: "restore",
