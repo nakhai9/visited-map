@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import type { ReactNode } from "react";
+import BaseModal from "../../shared/components/BaseModal/BaseModal";
 import BaseToast from "../../shared/components/BaseToast/BaseToast";
 type LayoutProps = {
   children?: ReactNode;
@@ -23,6 +24,7 @@ export default function Layout({ children }: LayoutProps) {
       </Box>
 
       <BaseToast />
+      <BaseModal />
     </Box>
   );
 }

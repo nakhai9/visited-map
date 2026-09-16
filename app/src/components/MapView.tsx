@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Checkbox,
   CircularProgress,
   FormControlLabel,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { COUNTRIES_OPTIONS } from "./../pages/demo/constant";
+import { useModal } from "./../shared/components/BaseModal/modal";
 import { useToast } from "./../shared/components/BaseToast/toast";
 
 const SIZE = 560;
@@ -68,6 +70,8 @@ export default function MapView({ onChange }: MapViewProps) {
   const [selectedProvinces, setSelectedProvinces] = useState<StateEvent[]>([]);
   const [showLabel, setShowLabel] = useState(false);
   const showToast = useToast((state) => state.showToast);
+  const hideModal = useModal((s) => s.hideModal);
+  const showModal = useModal((state) => state.showModal);
   const [countryCode, setCountryCode] = useState("world");
   const [isShowStats, setIsShowStats] = useState(false);
 
@@ -197,6 +201,61 @@ export default function MapView({ onChange }: MapViewProps) {
     });
   };
 
+  const handleShareSocial = () => {
+    const chart = chartRef.current?.getEchartsInstance();
+
+    if (!chart) return;
+
+    const url = chart.getDataURL({
+      type: "png",
+      pixelRatio: 2,
+      backgroundColor: COLORS.frame,
+    });
+
+    showModal({
+      title: "Chia sẻ hình ảnh",
+      content: (
+        <Box
+          component="img"
+          src={url}
+          alt="Xem trước bản đồ"
+          sx={{ width: "100%", borderRadius: 1, display: "block" }}
+        />
+      ),
+      actions: (
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ justifyContent: "space-between" }}
+        >
+          <Button
+            variant="contained"
+            sx={{ color: "#fffff !important", bgcolor: "#222222 !important" }}
+          >
+            Sao chép URL
+          </Button>
+
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ justifyContent: "flex-end" }}
+          >
+            <Button variant="contained" color="primary">
+              Chia sẻ
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={() => hideModal()}
+            >
+              Hủy
+            </Button>
+          </Stack>
+        </Stack>
+      ),
+    });
+  };
+
   const onEvents = {
     click: (params: any) => {
       const rawState = params.data;
@@ -244,9 +303,9 @@ export default function MapView({ onChange }: MapViewProps) {
     },
     {
       icon: Share2,
-      onClick: undefined,
+      onClick: handleShareSocial,
       disabled: noSelection,
-      isHidden: true,
+      isHidden: false,
     },
     {
       icon: RotateCcw,
@@ -274,31 +333,57 @@ export default function MapView({ onChange }: MapViewProps) {
   }, [countryCode]);
 
   return (
-    <Stack
-      direction="column"
-      sx={{
-        alignItems: "center",
-      }}
-      spacing={4}
-    >
-      <Select
-        fullWidth
-        value={countryCode}
-        onChange={(event: SelectChangeEvent) => {
-          setCountryCode(event.target.value);
-          setSelectedProvinces([]);
+    <>
+      <Stack
+        direction="column"
+        sx={{
+          alignItems: "center",
         }}
-        renderValue={(selected) => {
-          const selectedCountry = COUNTRIES_OPTIONS.find(
-            (c) => c.value === selected,
-          );
-          if (!selectedCountry) return null;
-          return (
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              {selectedCountry.flag && (
+        spacing={4}
+      >
+        <Select
+          fullWidth
+          value={countryCode}
+          onChange={(event: SelectChangeEvent) => {
+            setCountryCode(event.target.value);
+            setSelectedProvinces([]);
+          }}
+          renderValue={(selected) => {
+            const selectedCountry = COUNTRIES_OPTIONS.find(
+              (c) => c.value === selected,
+            );
+            if (!selectedCountry) return null;
+            return (
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {selectedCountry.flag && (
+                  <Box
+                    component="img"
+                    src={`https://flags.restcountries.com/v5/svg/${selectedCountry.flag}.svg`}
+                    alt="description"
+                    sx={{
+                      width: 20,
+                      border: "1px solid #ddd",
+                      mr: 1,
+                      flexShrink: 0,
+                      display: "block",
+                    }}
+                  />
+                )}
+                <Box component="span">{selectedCountry.label}</Box>
+              </Box>
+            );
+          }}
+        >
+          {COUNTRIES_OPTIONS.map((c) => (
+            <MenuItem
+              key={c.value}
+              value={c.value}
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              {c.flag && (
                 <Box
                   component="img"
-                  src={`https://flags.restcountries.com/v5/svg/${selectedCountry.flag}.svg`}
+                  src={`https://flags.restcountries.com/v5/svg/${c.flag}.svg`}
                   alt="description"
                   sx={{
                     width: 20,
@@ -309,151 +394,127 @@ export default function MapView({ onChange }: MapViewProps) {
                   }}
                 />
               )}
-              <Box component="span">{selectedCountry.label}</Box>
-            </Box>
-          );
-        }}
-      >
-        {COUNTRIES_OPTIONS.map((c) => (
-          <MenuItem
-            key={c.value}
-            value={c.value}
-            sx={{ display: "flex", alignItems: "center" }}
-          >
-            {c.flag && (
-              <Box
-                component="img"
-                src={`https://flags.restcountries.com/v5/svg/${c.flag}.svg`}
-                alt="description"
-                sx={{
-                  width: 20,
-                  border: "1px solid #ddd",
-                  mr: 1,
-                  flexShrink: 0,
-                  display: "block",
-                }}
-              />
-            )}
-            {c.label}
-          </MenuItem>
-        ))}
-      </Select>
-      <Box
-        sx={{
-          width: "100%",
-        }}
-      >
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          Chạm để chọn một tỉnh, thành — kéo và chụm hai ngón để phóng to bản
-          đồ.
-        </Typography>
-        <Paper
-          elevation={4}
+              {c.label}
+            </MenuItem>
+          ))}
+        </Select>
+        <Box
           sx={{
-            height: {
-              xs: MIN_HEIGHT,
-              sm: 560,
-              md: HEIGHT,
-            },
             width: "100%",
-            bgcolor: "#F4F4FD",
-            position: "relative",
-            border: "1px solid #e5e7eb",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
           }}
         >
-          {ready ? (
-            <ReactECharts
-              key={countryCode}
-              option={chartOptions}
-              style={{ height: "100%", width: "100%" }}
-              onEvents={onEvents}
-              ref={chartRef}
-            />
-          ) : (
-            <CircularProgress aria-label="Loading…" />
-          )}
-          <Box
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Chạm để chọn một tỉnh, thành — kéo và chụm hai ngón để phóng to bản
+            đồ.
+          </Typography>
+          <Paper
+            elevation={4}
             sx={{
+              height: {
+                xs: MIN_HEIGHT,
+                sm: 560,
+                md: HEIGHT,
+              },
+              width: "100%",
+              bgcolor: "#F4F4FD",
+              position: "relative",
+              border: "1px solid #e5e7eb",
               display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              zIndex: 99,
-              position: "absolute",
-              top: 10,
-              right: 8,
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
-            {MAP_ACTIONS.map(
-              ({ icon: Icon, onClick, disabled, color, isHidden }, i) => (
-                <IconButton
-                  key={i}
-                  size="medium"
-                  onClick={onClick}
-                  disabled={disabled}
-                  sx={{
-                    bgcolor: "#FFFFFF",
-                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                    ...(color && { color }),
-                    display: isHidden ? "none" : "block",
-                  }}
-                >
-                  <Icon size={16} />
-                </IconButton>
-              ),
+            {ready ? (
+              <ReactECharts
+                key={countryCode}
+                option={chartOptions}
+                style={{ height: "100%", width: "100%" }}
+                onEvents={onEvents}
+                ref={chartRef}
+              />
+            ) : (
+              <CircularProgress aria-label="Loading…" />
             )}
-          </Box>
-          {isShowStats && (
             <Box
               sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                zIndex: 99,
                 position: "absolute",
                 top: 10,
-                left: 8,
-                width: 8,
-                height: 100,
-                borderRadius: 99,
-                bgcolor: "#E4E4F5",
-                overflow: "hidden",
-                display: "flex",
-                alignItems: "flex-end",
-                zIndex: 99,
+                right: 8,
               }}
             >
+              {MAP_ACTIONS.map(
+                ({ icon: Icon, onClick, disabled, color, isHidden }, i) => (
+                  <IconButton
+                    key={i}
+                    size="medium"
+                    onClick={onClick}
+                    disabled={disabled}
+                    sx={{
+                      bgcolor: "#FFFFFF",
+                      boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                      ...(color && { color }),
+                      display: isHidden ? "none" : "block",
+                    }}
+                  >
+                    <Icon size={16} />
+                  </IconButton>
+                ),
+              )}
+            </Box>
+            {isShowStats && (
               <Box
                 sx={{
-                  width: "100%",
-                  height: `${(selectedProvinces.length * 100) / states.filter((s: any) => !["hoang_sa", "truong_sa"].includes(s.codename)).length}%`,
+                  position: "absolute",
+                  top: 10,
+                  left: 8,
+                  width: 8,
+                  height: 100,
                   borderRadius: 99,
-                  background:
-                    "linear-gradient(180deg, #6355E0 0%, #0E9C86 100%)",
-                  transition: "height 0.4s cubic-bezier(0.3, 0.8, 0.3, 1)",
+                  bgcolor: "#E4E4F5",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "flex-end",
+                  zIndex: 99,
                 }}
-              />
-            </Box>
-          )}
-        </Paper>
-      </Box>
+              >
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: `${(selectedProvinces.length * 100) / states.filter((s: any) => !["hoang_sa", "truong_sa"].includes(s.codename)).length}%`,
+                    borderRadius: 99,
+                    background:
+                      "linear-gradient(180deg, #6355E0 0%, #0E9C86 100%)",
+                    transition: "height 0.4s cubic-bezier(0.3, 0.8, 0.3, 1)",
+                  }}
+                />
+              </Box>
+            )}
+          </Paper>
+        </Box>
 
-      <Box>
-        <FormControlLabel
-          control={
-            <Checkbox
-              size="small"
-              checked={showLabel}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setShowLabel(e.target.checked)
-              }
-            />
-          }
-          label={
-            <Typography sx={{ fontSize: 12 }}>
-              Hiện tên tỉnh/thành phố
-            </Typography>
-          }
-        />
-      </Box>
-    </Stack>
+        <Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={showLabel}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setShowLabel(e.target.checked)
+                }
+              />
+            }
+            label={
+              <Typography sx={{ fontSize: 12 }}>
+                Hiện tên tỉnh/thành phố
+              </Typography>
+            }
+          />
+        </Box>
+      </Stack>
+    </>
   );
 }
