@@ -84,10 +84,10 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
         trigger: "item",
         formatter: (params: any) => {
           const p = params.data as ProvinceProperties | undefined;
-          if (!p) return "Chưa có dữ liệu";
+          if (!p?.ten_tinh) return "Chưa có dữ liệu";
 
           // Trả về HTML String thuần
-          return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p.ten_tinh}</div>`;
+          return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh}</div>`;
         },
       },
       series: [
@@ -133,7 +133,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
         },
       ],
     }),
-    [showLabel],
+    [showLabel, states],
   );
 
   const handleDownload = () => {
