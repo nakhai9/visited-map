@@ -1,4 +1,4 @@
-import { Grid } from "@mui/material";
+import { Box, Grid } from "@mui/material";
 import { useState } from "react";
 import VietnamMapChart, {
   type StateEvent,
@@ -12,6 +12,7 @@ export default function Demo() {
       <Grid spacing={2} container>
         <Grid size={{ sm: 4, xs: 12 }}></Grid>
         <Grid size={{ sm: 4, xs: 12 }}>
+          <Box sx={{ height: { xs: 12, sm: 24, md: 56 } }}></Box>
           <VietnamMapChart onChange={(states) => setStates(states)} />
         </Grid>
         <Grid size={{ sm: 4, xs: 12 }}></Grid>
