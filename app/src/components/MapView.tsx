@@ -28,6 +28,7 @@ import { useToast } from "./../shared/components/BaseToast/toast";
 const SIZE = 560;
 const WIDTH = SIZE;
 const HEIGHT = SIZE;
+const MIN_HEIGHT = 320;
 
 const COLORS = {
   frame: "#F4F4FD",
@@ -349,7 +350,8 @@ export default function MapView({ onChange }: MapViewProps) {
         <Paper
           elevation={4}
           sx={{
-            height: HEIGHT,
+            maxHeight: HEIGHT,
+            height: MIN_HEIGHT,
             width: "100%",
             bgcolor: "#F4F4FD",
             position: "relative",
