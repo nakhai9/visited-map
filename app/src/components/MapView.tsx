@@ -1,171 +1,332 @@
-import Box from "@mui/material/Box";
-import Tooltip from "@mui/material/Tooltip";
-import { geoIdentity, geoPath } from "d3-geo";
-import type { Feature, FeatureCollection } from "geojson";
-import { useEffect, useRef, useState } from "react";
-import type { LocationState } from "./StateSelector";
+import {
+  Box,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import type { EChartsOption } from "echarts";
+import * as echarts from "echarts";
+import ReactECharts from "echarts-for-react";
+import { ArrowDownToLine, Camera, RotateCcw, Share2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useToast } from "./../shared/components/BaseToast/toast";
 
-export type MapTool = "food" | "weather" | "visited" | "stay" | "info";
-const SIZE = 520;
+const GEO_URL = `/countries/world.json`;
+const MAP_NAME = "vietnam";
 
-type MapViewProps = {
-  states: LocationState[];
-  onToolClick?: (tool: MapTool) => void;
-  onStateChange?: (newStates: LocationState[]) => void;
+const SIZE = 560;
+const WIDTH = SIZE;
+const HEIGHT = SIZE;
+
+const COLORS = {
+  frame: "#F4F4FD",
+  active: "#6C63D9",
+  border: "#FFFFFF",
+  inactive: "#C9C3F7",
+  inactiveHover: "#B3A9F3",
 };
 
-export default function MapView({ states = [], onStateChange }: MapViewProps) {
-  const [geoJson, setGeoJson] = useState<FeatureCollection | null>(null);
+export interface ProvinceProperties {
+  codename: string;
+  administrative_center: string;
+  name: string;
+  code: number;
+  ten_tinh: string;
+  sap_nhap: string;
+  tru_so: string;
+  loai: string;
+  cap: number;
+  lat: number;
+  lon: number;
+}
 
-  const [hoveredFeature, setHoveredFeature] = useState<Feature | null>(null);
+export type StateEvent = {
+  codename: string;
+  code: number;
+  name: string;
+};
 
-  const svg = useRef(null);
+type MapViewProps = {
+  onChange?: (states: StateEvent[]) => void;
+};
+
+export default function MapView({ onChange }: MapViewProps) {
+  const [ready, setReady] = useState(false);
+  const [states, setState] = useState([]);
+  const [selectedProvinces, setSelectedProvinces] = useState<StateEvent[]>([]);
+  const [showLabel, setShowLabel] = useState(false);
+  const showToast = useToast((state) => state.showToast);
+
+  const chartRef = useRef<ReactECharts>(null);
+
+  const fecthAndRegisterGeoData = async () => {
+    try {
+      const response = await fetch(GEO_URL);
+      if (!response.ok) throw new Error(`HTTP ${response.status} — ${GEO_URL}`);
+      const data = await response.json();
+
+      echarts.registerMap(MAP_NAME, data);
+      setState(data.features.map((x: any) => x.properties) || []);
+    } catch (error) {
+      console.error("Error", error);
+    }
+  };
+
+  const chartOptions: EChartsOption = useMemo(
+    () => ({
+      title: {
+        // text: "Map of 26 Provinces and 8 Centrally-Governed Cities",
+        // subtext: "Demo",
+        // sublink: "http://zh.wikipedia.org/wiki/%E9%A6%99%E6%B8%AF%E8%A1%8C%E6%94%BF%E5%8D%80%E5%8A%83#cite_note-12",
+      },
+
+      tooltip: {
+        trigger: "item",
+        formatter: (params: any) => {
+          const p = params.data as ProvinceProperties | undefined;
+          return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh || p?.name || "Chưa có dữ liệu"}</div>`;
+        },
+      },
+      series: [
+        {
+          type: "map",
+          map: MAP_NAME,
+          aspectScale: 1,
+          label: {
+            show: showLabel,
+          },
+          roam: true,
+          scaleLimit: { min: 1, max: 4 },
+          data: states,
+          itemStyle: {
+            borderWidth: 1,
+            borderColor: "#FFFFFF",
+            areaColor: COLORS.inactive,
+          },
+
+          layoutCenter: ["50%", "50%"],
+          layoutSize: "100%",
+
+          selectedMode: "multiple",
+
+          emphasis: {
+            label: {
+              show: false,
+            },
+            itemStyle: {
+              areaColor: COLORS.active,
+            },
+          },
+
+          select: {
+            label: {
+              show: showLabel,
+              color: showLabel ? "#FFFFFF" : "#475569",
+              z: 10,
+              textShadowColor: "rgba(0, 0, 0, 0.4)",
+              textShadowBlur: 4,
+              textShadowOffsetX: 1,
+              textShadowOffsetY: 1,
+            },
+            itemStyle: {
+              areaColor: COLORS.active,
+            },
+          },
+        },
+      ],
+    }),
+    [showLabel, states],
+  );
+
+  const handleDownload = () => {
+    const chart = chartRef.current?.getEchartsInstance();
+
+    if (!chart) return;
+
+    const url = chart.getDataURL({
+      type: "png",
+      pixelRatio: 2,
+      backgroundColor: COLORS.frame,
+    });
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ban-do-viet-nam.png";
+    link.click();
+
+    showToast({
+      message: "Làm mới thành công",
+      severity: "success",
+    });
+  };
+
+  const handleReset = () => {
+    const chart = chartRef.current?.getEchartsInstance();
+
+    if (!chart) return;
+
+    setShowLabel(false);
+    setSelectedProvinces([]);
+
+    chart.dispatchAction({
+      type: "restore",
+    });
+
+    chart.dispatchAction({
+      type: "mapUnSelect",
+      seriesIndex: 0,
+    });
+
+    showToast({
+      message: "Làm mới thành công",
+      severity: "success",
+    });
+  };
+
+  const onEvents = {
+    click: (params: any) => {
+      const rawState = params.data;
+
+      if (!rawState) return;
+
+      let newSelectedStates = [];
+      if (
+        selectedProvinces.find((state) => state.codename === rawState.codename)
+      ) {
+        newSelectedStates = selectedProvinces.filter(
+          (x: any) => x.codename !== rawState.codename,
+        );
+      } else {
+        newSelectedStates = [
+          ...selectedProvinces,
+          {
+            codename: rawState.codename,
+            name: rawState.name,
+            code: rawState.code,
+          },
+        ];
+      }
+
+      setSelectedProvinces([...newSelectedStates]);
+
+      onChange?.([...newSelectedStates]);
+    },
+    mouseover: (_params: any) => {
+      //   console.log("Hover:", params.name);
+    },
+    mouseout: (_params: any) => {
+      //   console.log("Leave:", params.name);
+    },
+  };
 
   useEffect(() => {
-    fetch("/raw/34/vietnam.geojson")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Không thể load GeoJSON");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setGeoJson(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    fecthAndRegisterGeoData().then(() => setReady(true));
   }, []);
 
-  if (!geoJson) return null;
-
-  const projection = geoIdentity()
-    .reflectY(true)
-    .fitSize([SIZE, SIZE], geoJson);
-
-  const pathGenerator = geoPath().projection(projection);
-
-  const handleStateClick = (feature: Feature) => {
-    const clickedState = mapFeatureToLocationState(feature);
-
-    if (!clickedState) {
-      onStateChange?.([...states]);
-      return;
-    }
-
-    const isExisting = states.some((s) => s.code === clickedState.code);
-
-    if (isExisting) {
-      const updatedStates = states.filter((s) => s.code !== clickedState.code);
-      onStateChange?.(updatedStates);
-    } else {
-      const updatedStates = [...states, clickedState];
-      onStateChange?.(updatedStates);
-    }
-  };
-
-  const mapFeatureToLocationState = (
-    feature: Feature,
-  ): LocationState | null => {
-    const rawData = feature.properties;
-    if (!rawData) return null;
-    return {
-      code: Number(rawData["ma_tinh"]),
-      codename: String(rawData["ten_tinh"])
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/\s+/g, "_"),
-      name: String(rawData["ten_tinh"]),
-    };
-  };
-
   return (
-    <Box
+    <Stack
+      direction="column"
       sx={{
-        position: "relative",
-        overflow: "hidden",
-        width: "100%",
-        borderRadius: 2,
-        border: "1px solid #e5e7eb",
-        p: 4,
+        alignItems: "center",
       }}
+      spacing={4}
     >
-      <Box
+      <Paper
+        elevation={4}
         sx={{
-          width: SIZE,
-          height: SIZE,
-          marginX: "auto",
+          height: HEIGHT,
+          width: "100%",
+          bgcolor: "#F4F4FD",
           position: "relative",
+          border: "1px solid #e5e7eb",
         }}
       >
-        <svg style={{ width: "100%", height: "100%" }} ref={svg}>
-          <g>
-            {geoJson.features.map((feature, index) => {
-              const centroid = pathGenerator.centroid(feature);
-              const isHovered = hoveredFeature === feature;
+        {ready && (
+          <ReactECharts
+            option={chartOptions}
+            style={{ height: "100%", width: "100%" }}
+            onEvents={onEvents}
+            ref={chartRef}
+          />
+        )}
 
-              const stateCode =
-                feature.properties?.["code"] || feature.properties?.["ma_tinh"];
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            zIndex: 99,
+            position: "absolute",
+            top: 10,
+            right: 8,
+          }}
+        >
+          <IconButton
+            size="medium"
+            disabled={Boolean(!selectedProvinces.length)}
+            sx={{
+              bgcolor: "#FFFFFF",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Camera />
+          </IconButton>
+          <IconButton
+            size="medium"
+            disabled={Boolean(!selectedProvinces.length)}
+            sx={{
+              bgcolor: "#FFFFFF",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Share2 />
+          </IconButton>
+          <IconButton
+            size="medium"
+            onClick={handleReset}
+            sx={{
+              bgcolor: "#FFFFFF",
+              color: "#ef4444",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <RotateCcw />
+          </IconButton>
+          <IconButton
+            size="medium"
+            disabled={Boolean(!selectedProvinces.length)}
+            sx={{
+              bgcolor: "#FFFFFF",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+            onClick={handleDownload}
+          >
+            <ArrowDownToLine />
+          </IconButton>
+        </Box>
+      </Paper>
 
-              const stateName =
-                feature.properties?.["ten_tinh"] ||
-                feature.properties?.["name"] ||
-                "Không xác định";
-
-              const isSelected = states.some(
-                (s) => s.code === Number(feature?.properties?.["ma_tinh"]),
-              );
-
-              return (
-                <Tooltip
-                  key={feature.id ?? index}
-                  title={stateName}
-                  arrow
-                  placement="top"
-                >
-                  <g
-                    onMouseEnter={() => setHoveredFeature(feature)}
-                    onMouseLeave={() => setHoveredFeature(null)}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleStateClick(feature)}
-                  >
-                    {/* Vẽ hình bản đồ */}
-                    <path
-                      d={pathGenerator(feature) ?? ""}
-                      fill={
-                        isHovered
-                          ? "#fda4af"
-                          : isSelected
-                            ? "#be123c"
-                            : "#9ca3af"
-                      }
-                      stroke="#FFFFFF"
-                      strokeWidth={1}
-                      style={{ transition: "fill 200ms" }}
-                    />
-
-                    {centroid && !isNaN(centroid[0]) && (
-                      <text
-                        x={centroid[0]}
-                        y={centroid[1]}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fill="#FFFFFF"
-                        fontSize={10}
-                        fontWeight="bold"
-                        style={{ pointerEvents: "none" }}
-                      >
-                        {stateCode}
-                      </text>
-                    )}
-                  </g>
-                </Tooltip>
-              );
-            })}
-          </g>
-        </svg>
+      <Box>
+        <FormControlLabel
+          control={
+            <Checkbox
+              size="small"
+              checked={showLabel}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setShowLabel(e.target.checked)
+              }
+            />
+          }
+          label={
+            <Typography sx={{ fontSize: 12 }}>
+              Hiện tên tỉnh/thành phố
+            </Typography>
+          }
+        />
       </Box>
-    </Box>
+    </Stack>
   );
 }

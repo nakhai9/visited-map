@@ -1,8 +1,8 @@
 import {
   Box,
-  Button,
   Checkbox,
   FormControlLabel,
+  IconButton,
   Paper,
   Stack,
   Typography,
@@ -14,7 +14,7 @@ import { ArrowDownToLine, Camera, RotateCcw, Share2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "./../shared/components/BaseToast/toast";
 
-const GEO_URL = `/raw/34/vn34.json`;
+const GEO_URL = `/countries/world.json`;
 const MAP_NAME = "vietnam";
 
 const SIZE = 560;
@@ -26,6 +26,7 @@ const COLORS = {
   active: "#6C63D9",
   border: "#FFFFFF",
   inactive: "#C9C3F7",
+  inactiveHover: "#B3A9F3",
 };
 
 export interface ProvinceProperties {
@@ -91,7 +92,6 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
       },
       series: [
         {
-          // name: "Map of 26 Provinces and 8 Centrally-Governed Cities",
           type: "map",
           map: MAP_NAME,
           aspectScale: 1,
@@ -102,7 +102,7 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
           scaleLimit: { min: 1, max: 4 },
           data: states,
           itemStyle: {
-            borderWidth: 2,
+            borderWidth: 1,
             borderColor: "#FFFFFF",
             areaColor: COLORS.inactive,
           },
@@ -121,9 +121,6 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
             },
           },
 
-          // ==============================
-          // Không hiển thị label khi click
-          // ==============================
           select: {
             label: {
               show: showLabel,
@@ -159,6 +156,11 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
     link.href = url;
     link.download = "ban-do-viet-nam.png";
     link.click();
+
+    showToast({
+      message: "Làm mới thành công",
+      severity: "success",
+    });
   };
 
   const handleReset = () => {
@@ -233,8 +235,14 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
       spacing={4}
     >
       <Paper
-        elevation={2}
-        sx={{ height: HEIGHT, width: "100%", bgcolor: "#F4F4FD" }}
+        elevation={4}
+        sx={{
+          height: HEIGHT,
+          width: "100%",
+          bgcolor: "#F4F4FD",
+          position: "relative",
+          border: "1px solid #e5e7eb",
+        }}
       >
         {ready && (
           <ReactECharts
@@ -244,6 +252,61 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
             ref={chartRef}
           />
         )}
+
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            zIndex: 99,
+            position: "absolute",
+            top: 10,
+            right: 8,
+          }}
+        >
+          <IconButton
+            size="medium"
+            disabled={Boolean(!selectedProvinces.length)}
+            sx={{
+              bgcolor: "#FFFFFF",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Camera />
+          </IconButton>
+          <IconButton
+            size="medium"
+            disabled={Boolean(!selectedProvinces.length)}
+            sx={{
+              bgcolor: "#FFFFFF",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Share2 />
+          </IconButton>
+          <IconButton
+            size="medium"
+            onClick={handleReset}
+            sx={{
+              bgcolor: "#FFFFFF",
+              color: "#ef4444",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <RotateCcw />
+          </IconButton>
+          <IconButton
+            size="medium"
+            disabled={Boolean(!selectedProvinces.length)}
+            sx={{
+              bgcolor: "#FFFFFF",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            }}
+            onClick={handleDownload}
+          >
+            <ArrowDownToLine />
+          </IconButton>
+        </Box>
       </Paper>
 
       <Box>
@@ -264,72 +327,6 @@ export default function VietnamMapChart({ onChange }: VietnamMapChartProps) {
           }
         />
       </Box>
-
-      <Stack direction="row" spacing={2}>
-        <Button
-          size="small"
-          disabled={Boolean(!selectedProvinces.length)}
-          startIcon={<ArrowDownToLine size={14} />}
-          sx={{
-            minHeight: 28,
-            minWidth: "auto",
-            px: 2,
-            py: 0,
-            border: "1px solid",
-            alignSelf: "flex-start",
-          }}
-          onClick={handleDownload}
-        >
-          Tải xuống
-        </Button>
-
-        <Button
-          size="small"
-          disabled={Boolean(!selectedProvinces.length)}
-          startIcon={<Camera size={14} />}
-          sx={{
-            minHeight: 28,
-            minWidth: "auto",
-            px: 2,
-            py: 0,
-            border: "1px solid",
-            alignSelf: "flex-start",
-          }}
-        >
-          Chụp ảnh
-        </Button>
-
-        <Button
-          size="small"
-          disabled={Boolean(!selectedProvinces.length)}
-          startIcon={<Share2 size={14} />}
-          sx={{
-            minHeight: 28,
-            minWidth: "auto",
-            px: 2,
-            py: 0,
-            border: "1px solid",
-            alignSelf: "flex-start",
-          }}
-        >
-          Chia sẻ
-        </Button>
-        <Button
-          size="small"
-          startIcon={<RotateCcw size={14} />}
-          onClick={handleReset}
-          sx={{
-            minHeight: 28,
-            minWidth: "auto",
-            px: 2,
-            py: 0,
-            border: "1px solid",
-            alignSelf: "flex-start",
-          }}
-        >
-          Làm mới
-        </Button>
-      </Stack>
     </Stack>
   );
 }

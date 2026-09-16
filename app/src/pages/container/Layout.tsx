@@ -13,11 +13,14 @@ export default function Layout({ children }: LayoutProps) {
         color: "text.primary",
         display: "flex",
         flexDirection: "column",
-        gap: 4,
         p: { sm: 0, xs: 4 },
       }}
     >
-      {children}
+      <Box
+        sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+      >
+        {children}
+      </Box>
 
       <BaseToast />
     </Box>
