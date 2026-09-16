@@ -350,8 +350,11 @@ export default function MapView({ onChange }: MapViewProps) {
         <Paper
           elevation={4}
           sx={{
-            maxHeight: HEIGHT,
-            height: MIN_HEIGHT,
+            height: {
+              xs: MIN_HEIGHT,
+              sm: 420,
+              md: HEIGHT,
+            },
             width: "100%",
             bgcolor: "#F4F4FD",
             position: "relative",
