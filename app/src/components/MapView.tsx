@@ -241,7 +241,7 @@ export default function MapView({ onChange }: MapViewProps) {
               bgcolor: "#222222 !important",
             }}
             onClick={() => handleCopyToClipboard()}
-            disabled={Boolean(!!publicUrl)}
+            disabled={!publicUrl}
           >
             Sao chép URL
           </Button>
