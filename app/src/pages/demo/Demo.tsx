@@ -8,7 +8,7 @@ export default function Demo() {
   const [states, setStates] = useState<StateEvent[]>([]);
   return (
     <Layout>
-      <Box sx={{ height: { xs: 12, sm: 24 }, py: 5, mx: "auto" }}>
+      <Box sx={{ py: 5, mx: "auto" }}>
         <Typography variant="h2">Những nơi đã đến</Typography>
       </Box>
       <Grid spacing={2} container>
