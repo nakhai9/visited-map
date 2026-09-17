@@ -9,6 +9,7 @@ import {
   Paper,
   Select,
   Stack,
+  Tooltip,
   Typography,
   type SelectChangeEvent,
 } from "@mui/material";
@@ -325,30 +326,35 @@ export default function MapView({ onChange }: MapViewProps) {
       onClick: undefined,
       disabled: noSelection,
       isHidden: true,
+      title: "",
     },
     {
       icon: Share2,
       onClick: handleShareSocial,
       disabled: noSelection,
       isHidden: false,
+      title: "Chia sẻ",
     },
     {
       icon: RotateCcw,
       onClick: handleReset,
       color: "#ef4444",
       isHidden: false,
+      title: "Làm mới",
     },
     {
       icon: ArrowDownToLine,
       onClick: handleDownload,
       disabled: noSelection,
       isHidden: false,
+      title: "Tải xuống",
     },
     {
       icon: ChartPie,
       onClick: () => setIsShowStats(!isShowStats),
       disabled: false,
       isHidden: false,
+      title: "Thống kê",
     },
   ];
 
@@ -533,21 +539,25 @@ export default function MapView({ onChange }: MapViewProps) {
               }}
             >
               {MAP_ACTIONS.map(
-                ({ icon: Icon, onClick, disabled, color, isHidden }, i) => (
-                  <IconButton
-                    key={i}
-                    size="medium"
-                    onClick={onClick}
-                    disabled={disabled}
-                    sx={{
-                      bgcolor: "#FFFFFF",
-                      boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                      ...(color && { color }),
-                      display: isHidden ? "none" : "block",
-                    }}
-                  >
-                    <Icon size={16} />
-                  </IconButton>
+                (
+                  { icon: Icon, onClick, disabled, color, isHidden, title },
+                  i,
+                ) => (
+                  <Tooltip key={i} title={title} placement="right">
+                    <IconButton
+                      size="medium"
+                      onClick={onClick}
+                      disabled={disabled}
+                      sx={{
+                        bgcolor: "#FFFFFF",
+                        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                        ...(color && { color }),
+                        display: isHidden ? "none" : "block",
+                      }}
+                    >
+                      <Icon size={16} />
+                    </IconButton>
+                  </Tooltip>
                 ),
               )}
             </Box>
