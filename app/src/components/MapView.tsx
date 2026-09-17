@@ -556,8 +556,7 @@ export default function MapView({ onChange }: MapViewProps) {
           }}
         >
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Chạm để chọn một tỉnh, thành — kéo và chụm hai ngón để phóng to bản
-            đồ.
+            Chạm để chọn nơi đã đến — kéo và chụm hai ngón để phóng to bản đồ.
           </Typography>
           <Paper
             elevation={4}
