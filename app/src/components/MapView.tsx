@@ -22,7 +22,7 @@ import {
   Bookmark,
   Camera,
   ChartPie,
-  RotateCcw
+  RotateCcw,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -348,6 +348,7 @@ export default function MapView({ onChange }: MapViewProps) {
       disabled: noSelection,
       isHidden: false,
       title: "Chụp ảnh và chia sẻ",
+      color: "#1e40af",
     },
     {
       icon: RotateCcw,
