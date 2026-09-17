@@ -23,6 +23,12 @@ import {
   Share2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FacebookIcon,
+  FacebookShareButton,
+  ThreadsIcon,
+  ThreadsShareButton,
+} from "react-share";
 import { COUNTRIES_OPTIONS } from "./../pages/demo/constant";
 import { useModal } from "./../shared/components/BaseModal/modal";
 import { useToast } from "./../shared/components/BaseToast/toast";
@@ -206,14 +212,19 @@ export default function MapView({ onChange }: MapViewProps) {
 
   const handleShareSocial = async () => {
     const chart = chartRef.current?.getEchartsInstance();
-
     if (!chart) return;
 
-    const url = await chart.getDataURL({
+    const dataUrl = chart.getDataURL({
       type: "png",
       pixelRatio: 2,
       backgroundColor: COLORS.frame,
     });
+
+    const file = Utils.image.dataURLtoFile(dataUrl, `${Date.now()}`);
+    const imageUrl = await handleUploadFile(file);
+    if (imageUrl) setPublicUrl(imageUrl);
+
+    const shareUrl = imageUrl || import.meta.env.VITE_PLACEHOLDER_URL;
 
     showModal({
       title: "Chia sẻ hình ảnh",
@@ -221,59 +232,53 @@ export default function MapView({ onChange }: MapViewProps) {
         <Box sx={{ width: "100%" }}>
           <Box
             component="img"
-            src={url}
+            src={dataUrl}
             alt="Xem trước bản đồ"
             sx={{ width: "100%", borderRadius: 1, display: "block" }}
           />
+          <Box sx={{ my: 3 }}>
+            <Typography
+              sx={{ fontSize: 13, display: "block", fontWeight: 600, mb: 2 }}
+            >
+              Chia sẻ hình ảnh qua
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <FacebookShareButton url={shareUrl} hashtag="#VisitedMap">
+                <FacebookIcon size={32} round />
+              </FacebookShareButton>
+              <ThreadsShareButton url={shareUrl}>
+                <ThreadsIcon size={32} round />
+              </ThreadsShareButton>
+            </Stack>
+          </Box>
         </Box>
       ),
       actions: (
         <Stack
           direction="row"
           spacing={2}
-          sx={{ justifyContent: "space-between", width: "100%" }}
+          sx={{ justifyContent: "flex-end", width: "100%" }}
         >
           <Button
             variant="contained"
             size="medium"
-            sx={{
-              color: "#fffff !important",
-              bgcolor: "#222222 !important",
-            }}
-            onClick={() => handleCopyToClipboard()}
-            disabled={!publicUrl}
+            sx={{ color: "#fffff !important", bgcolor: "#222222 !important" }}
+            onClick={handleCopyToClipboard}
+            disabled={!imageUrl}
           >
             Sao chép URL
           </Button>
-
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ justifyContent: "flex-end" }}
+          <Button
+            size="medium"
+            variant="outlined"
+            color="secondary"
+            onClick={() => hideModal()}
           >
-            <Button size="medium" variant="contained" color="primary">
-              Chia sẻ
-            </Button>
-            <Button
-              size="medium"
-              variant="outlined"
-              color="secondary"
-              onClick={() => hideModal()}
-            >
-              Hủy
-            </Button>
-          </Stack>
+            Hủy
+          </Button>
         </Stack>
       ),
     });
-
-    const file = Utils.image.dataURLtoFile(url, `${Date.now()}`);
-
-    const imageUrl = await handleUploadFile(file);
-
-    if (imageUrl) {
-      setPublicUrl(imageUrl);
-    }
   };
 
   const onEvents = {
