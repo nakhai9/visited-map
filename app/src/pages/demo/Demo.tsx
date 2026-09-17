@@ -1,4 +1,4 @@
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import { useState } from "react";
 import MapView from "../../components/MapView";
 import { type StateEvent } from "../../components/VietnamMapChart";
@@ -11,7 +11,9 @@ export default function Demo() {
       <Grid spacing={2} container>
         <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
         <Grid size={{ md: 6, sm: 10, xs: 12 }}>
-          <Box sx={{ height: { xs: 12, sm: 24 } }}></Box>
+          <Box sx={{ height: { xs: 12, sm: 24 } }}>
+            <Typography variant="h2">Những nơi đã đến</Typography>
+          </Box>
           <MapView onChange={(states) => setStates(states)} />
         </Grid>
         <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
