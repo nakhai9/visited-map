@@ -713,7 +713,8 @@ export default function MapView({ onChange }: MapViewProps) {
             }
             label={
               <Typography sx={{ fontSize: 12 }}>
-                Hiện tên tỉnh/thành phố
+                Hiện tên{" "}
+                {countryCode === "world" ? "quốc gia" : "tỉnh/thành phố"}
               </Typography>
             }
           />
