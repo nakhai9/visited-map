@@ -26,11 +26,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { COUNTRIES_OPTIONS } from "./../pages/demo/constant";
 import { useModal } from "./../shared/components/BaseModal/modal";
 import { useToast } from "./../shared/components/BaseToast/toast";
+import { Utils } from "./../shared/utils/helper";
 
 const SIZE = 560;
 const WIDTH = SIZE;
-const HEIGHT = SIZE;
-const MIN_HEIGHT = 320;
+const HEIGHT = 520;
+const MIN_HEIGHT = 380;
 
 const COLORS = {
   frame: "#F4F4FD",
@@ -74,6 +75,8 @@ export default function MapView({ onChange }: MapViewProps) {
   const showModal = useModal((state) => state.showModal);
   const [countryCode, setCountryCode] = useState("world");
   const [isShowStats, setIsShowStats] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [publicUrl, setPublicUrl] = useState("");
 
   const chartRef = useRef<ReactECharts>(null);
 
@@ -117,7 +120,7 @@ export default function MapView({ onChange }: MapViewProps) {
             show: showLabel,
           },
           roam: true,
-          scaleLimit: { min: 1, max: 10 },
+          scaleLimit: { min: 1, max: 8 },
           data: states,
           itemStyle: {
             borderWidth: 1,
@@ -169,7 +172,7 @@ export default function MapView({ onChange }: MapViewProps) {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `image-${new Date().getTime()}`;
+    link.download = `image-${new Date().getTime()}.png`;
     link.click();
 
     showToast({
@@ -201,12 +204,12 @@ export default function MapView({ onChange }: MapViewProps) {
     });
   };
 
-  const handleShareSocial = () => {
+  const handleShareSocial = async () => {
     const chart = chartRef.current?.getEchartsInstance();
 
     if (!chart) return;
 
-    const url = chart.getDataURL({
+    const url = await chart.getDataURL({
       type: "png",
       pixelRatio: 2,
       backgroundColor: COLORS.frame,
@@ -215,12 +218,14 @@ export default function MapView({ onChange }: MapViewProps) {
     showModal({
       title: "Chia sẻ hình ảnh",
       content: (
-        <Box
-          component="img"
-          src={url}
-          alt="Xem trước bản đồ"
-          sx={{ width: "100%", borderRadius: 1, display: "block" }}
-        />
+        <Box sx={{ width: "100%" }}>
+          <Box
+            component="img"
+            src={url}
+            alt="Xem trước bản đồ"
+            sx={{ width: "100%", borderRadius: 1, display: "block" }}
+          />
+        </Box>
       ),
       actions: (
         <Stack
@@ -230,7 +235,13 @@ export default function MapView({ onChange }: MapViewProps) {
         >
           <Button
             variant="contained"
-            sx={{ color: "#fffff !important", bgcolor: "#222222 !important" }}
+            size="medium"
+            sx={{
+              color: "#fffff !important",
+              bgcolor: "#222222 !important",
+            }}
+            onClick={() => handleCopyToClipboard()}
+            disabled={Boolean(!publicUrl)}
           >
             Sao chép URL
           </Button>
@@ -240,10 +251,11 @@ export default function MapView({ onChange }: MapViewProps) {
             spacing={2}
             sx={{ justifyContent: "flex-end" }}
           >
-            <Button variant="contained" color="primary">
+            <Button size="medium" variant="contained" color="primary">
               Chia sẻ
             </Button>
             <Button
+              size="medium"
               variant="outlined"
               color="secondary"
               onClick={() => hideModal()}
@@ -254,6 +266,14 @@ export default function MapView({ onChange }: MapViewProps) {
         </Stack>
       ),
     });
+
+    const file = Utils.image.dataURLtoFile(url, `${Date.now()}`);
+
+    const imageUrl = await handleUploadFile(file);
+
+    if (imageUrl) {
+      setPublicUrl(imageUrl);
+    }
   };
 
   const onEvents = {
@@ -326,6 +346,67 @@ export default function MapView({ onChange }: MapViewProps) {
       isHidden: false,
     },
   ];
+
+  const handleZoomIn = () => {
+    const chart = chartRef.current?.getEchartsInstance();
+    if (!chart) return;
+
+    chart.dispatchAction({
+      type: "geoRoam",
+      componentType: "series",
+      seriesIndex: 0,
+      zoom: 1.2,
+      originX: chart.getWidth() / 2,
+      originY: chart.getHeight() / 2,
+    });
+  };
+
+  const handleZoomOut = () => {
+    const chart = chartRef.current?.getEchartsInstance();
+    if (!chart) return;
+
+    chart.dispatchAction({
+      type: "geoRoam",
+      componentType: "series",
+      seriesIndex: 0,
+      zoom: 1 / 1.2,
+      originX: chart.getWidth() / 2,
+      originY: chart.getHeight() / 2,
+    });
+  };
+
+  const handleUploadFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append(`${import.meta.env.VITE_UPLOAD_TYPE}`, file);
+      const response = await fetch(
+        `${import.meta.env.VITE_CLOUDINARY_SERVER}/api/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+      if (!response.ok) {
+        showToast({
+          severity: "error",
+          message: "Không thể tạo hình ảnh",
+        });
+        throw new Error(`Upload thất bại: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data.url;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (!publicUrl) return;
+    await navigator.clipboard.writeText(publicUrl);
+    showToast({ message: "Đã copy URL vào clipboard", severity: "success" });
+  };
 
   useEffect(() => {
     setReady(false);
@@ -412,7 +493,7 @@ export default function MapView({ onChange }: MapViewProps) {
             sx={{
               height: {
                 xs: MIN_HEIGHT,
-                sm: 560,
+                sm: 460,
                 md: HEIGHT,
               },
               width: "100%",
@@ -465,6 +546,40 @@ export default function MapView({ onChange }: MapViewProps) {
                 ),
               )}
             </Box>
+            {/* <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                zIndex: 99,
+                position: "absolute",
+                bottom: 10,
+                right: 8,
+              }}
+            >
+              <IconButton
+                size="medium"
+                onClick={handleZoomIn}
+                sx={{
+                  bgcolor: "#FFFFFF",
+                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                <Plus size={16} />
+              </IconButton>
+
+              <IconButton
+                size="medium"
+                onClick={handleZoomOut}
+                sx={{
+                  bgcolor: "#FFFFFF",
+                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                }}
+                disabled={Boolean(zoomLevel <= 1)}
+              >
+                <Minus size={16} />
+              </IconButton>
+            </Box> */}
             {isShowStats && (
               <Box
                 sx={{

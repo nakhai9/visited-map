@@ -43,7 +43,7 @@ export default function BaseToast({
         elevation={6}
         sx={{ width: "100%", alignItems: "center" }}
       >
-        {properties?.message} {properties?.severity}
+        {properties?.message}
       </Alert>
     </Snackbar>
   );

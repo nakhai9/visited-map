@@ -32,7 +32,14 @@ export default function BaseModal() {
             fullWidth={modal.fullWidth ?? true}
           >
             {modal.title && (
-              <DialogTitle sx={{ display: "flex", alignItems: "center", pr: 6 }}>
+              <DialogTitle
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  pr: 6,
+                  bgcolor: "#f8fafc",
+                }}
+              >
                 {modal.title}
                 {!modal.disableClose && (
                   <IconButton
@@ -45,9 +52,15 @@ export default function BaseModal() {
               </DialogTitle>
             )}
 
-            {modal.content && <DialogContent>{modal.content}</DialogContent>}
+            {modal.content && (
+              <DialogContent dividers>{modal.content}</DialogContent>
+            )}
 
-            {modal.actions && <DialogActions>{modal.actions}</DialogActions>}
+            {modal.actions && (
+              <DialogActions sx={{ px: 2, py: 3, width: "100%" }}>
+                {modal.actions}
+              </DialogActions>
+            )}
           </Dialog>
         );
       })}
