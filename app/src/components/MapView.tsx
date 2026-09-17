@@ -22,8 +22,7 @@ import {
   Bookmark,
   Camera,
   ChartPie,
-  RotateCcw,
-  Share2,
+  RotateCcw
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -345,17 +344,10 @@ export default function MapView({ onChange }: MapViewProps) {
   const MAP_ACTIONS = [
     {
       icon: Camera,
-      onClick: undefined,
-      disabled: noSelection,
-      isHidden: true,
-      title: "",
-    },
-    {
-      icon: Share2,
       onClick: handleShareSocial,
       disabled: noSelection,
       isHidden: false,
-      title: "Chia sẻ",
+      title: "Chụp ảnh và chia sẻ",
     },
     {
       icon: RotateCcw,
