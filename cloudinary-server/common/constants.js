@@ -1,0 +1,1 @@
+export const GUEST_USER_ID = "69a411236ef8aea7d9e0e96c"; 
