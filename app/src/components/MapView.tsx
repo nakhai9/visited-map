@@ -85,6 +85,8 @@ export default function MapView({ onChange }: MapViewProps) {
   const [isShowStats, setIsShowStats] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [publicUrl, setPublicUrl] = useState("");
+  const [isFlashing, setIsFlashing] = useState(false);
+  const timeoutRef = useRef(0);
 
   const chartRef = useRef<ReactECharts>(null);
 
@@ -215,6 +217,18 @@ export default function MapView({ onChange }: MapViewProps) {
   const handleShareSocial = async () => {
     const chart = chartRef.current?.getEchartsInstance();
     if (!chart) return;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Bật flash ngay lập tức
+    setIsFlashing(true);
+
+    // Tắt flash sau 80ms
+    timeoutRef.current = setTimeout(() => {
+      setIsFlashing(false);
+    }, 80);
 
     const dataUrl = chart.getDataURL({
       type: "png",
@@ -645,6 +659,21 @@ export default function MapView({ onChange }: MapViewProps) {
                 />
               </Box>
             )}
+
+            <Box
+              sx={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                background: "white",
+                opacity: isFlashing ? 0.95 : 0,
+                pointerEvents: "none",
+                zIndex: 9999,
+                transition: isFlashing ? "none" : "opacity 0.08s ease-out",
+              }}
+            />
           </Paper>
         </Box>
 
