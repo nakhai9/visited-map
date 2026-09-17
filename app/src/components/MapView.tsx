@@ -1,3 +1,4 @@
+import GoogleIcon from "@mui/icons-material/Google";
 import {
   Box,
   Button,
@@ -18,6 +19,7 @@ import * as echarts from "echarts";
 import ReactECharts from "echarts-for-react";
 import {
   ArrowDownToLine,
+  Bookmark,
   Camera,
   ChartPie,
   RotateCcw,
@@ -282,6 +284,26 @@ export default function MapView({ onChange }: MapViewProps) {
     });
   };
 
+  const handleSave = async () => {
+    const token = null;
+
+    if (!token) {
+      showModal({
+        title: "_",
+        content: (
+          <Box>
+            <Typography variant="subtitle1" sx={{ mb: 1, textAlign: "center" }}>
+              Bạn cần đăng nhập để sử dụng chức năng này
+            </Typography>
+            <Button fullWidth startIcon={<GoogleIcon />} variant="outlined">
+              Google
+            </Button>
+          </Box>
+        ),
+      });
+    }
+  };
+
   const onEvents = {
     click: (params: any) => {
       const rawState = params.data;
@@ -355,6 +377,13 @@ export default function MapView({ onChange }: MapViewProps) {
       disabled: false,
       isHidden: false,
       title: "Thống kê",
+    },
+    {
+      icon: Bookmark,
+      onClick: handleSave,
+      disabled: false,
+      isHidden: false,
+      title: "Ghi nhớ",
     },
   ];
 
