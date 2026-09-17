@@ -87,6 +87,7 @@ export default function MapView({ onChange }: MapViewProps) {
   const [publicUrl, setPublicUrl] = useState("");
   const [isFlashing, setIsFlashing] = useState(false);
   const timeoutRef = useRef(0);
+  const cameraSoundRef = useRef<HTMLAudioElement | null>(null);
 
   const chartRef = useRef<ReactECharts>(null);
 
@@ -224,6 +225,7 @@ export default function MapView({ onChange }: MapViewProps) {
 
     // Bật flash ngay lập tức
     setIsFlashing(true);
+    playCameraSound();
 
     // Tắt flash sau 80ms
     timeoutRef.current = setTimeout(() => {
@@ -455,10 +457,32 @@ export default function MapView({ onChange }: MapViewProps) {
     showToast({ message: "Đã copy URL vào clipboard", severity: "success" });
   };
 
+  const playCameraSound = () => {
+    const audio = cameraSoundRef.current;
+
+    if (!audio) return;
+
+    audio.currentTime = 0;
+
+    audio.play().catch((error) => {
+      console.warn("Không thể phát âm thanh:", error);
+    });
+  };
+
   useEffect(() => {
     setReady(false);
     fecthAndRegisterGeoData().then(() => setReady(true));
   }, [countryCode]);
+
+  useEffect(() => {
+    cameraSoundRef.current = new Audio("/chup-anh.mp3");
+    cameraSoundRef.current.volume = 0.7;
+
+    return () => {
+      cameraSoundRef.current?.pause();
+      cameraSoundRef.current = null;
+    };
+  }, []);
 
   return (
     <>
