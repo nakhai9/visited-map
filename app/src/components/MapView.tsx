@@ -231,7 +231,7 @@ export default function MapView({ onChange }: MapViewProps) {
         <Stack
           direction="row"
           spacing={2}
-          sx={{ justifyContent: "space-between" }}
+          sx={{ justifyContent: "space-between", width: "100%" }}
         >
           <Button
             variant="contained"
@@ -241,7 +241,7 @@ export default function MapView({ onChange }: MapViewProps) {
               bgcolor: "#222222 !important",
             }}
             onClick={() => handleCopyToClipboard()}
-            disabled={Boolean(!publicUrl)}
+            disabled={Boolean(!!publicUrl)}
           >
             Sao chép URL
           </Button>

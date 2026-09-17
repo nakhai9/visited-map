@@ -57,7 +57,7 @@ export default function BaseModal() {
             )}
 
             {modal.actions && (
-              <DialogActions sx={{ px: 2, py: 3, width: "100%" }}>
+              <DialogActions sx={{ px: 6, py: 3, width: "100%" }}>
                 {modal.actions}
               </DialogActions>
             )}
