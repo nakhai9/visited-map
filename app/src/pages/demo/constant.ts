@@ -10,7 +10,37 @@ export const COUNTRIES_OPTIONS = [
   },
   {
     label: "Nhật Bản",
-    value: "japan",
+    value: "jp",
     flag: "jp",
+  },
+  {
+    label: "Trung Quốc",
+    value: "cn",
+    flag: "cn",
+  },
+  {
+    label: "Pháp",
+    value: "fr",
+    flag: "fr",
+  },
+  {
+    label: "Thái Lan",
+    value: "th",
+    flag: "th",
+  },
+  {
+    label: "Hàn Quốc",
+    value: "kr",
+    flag: "kr",
+  },
+  {
+    label: "Úc Quốc",
+    value: "au",
+    flag: "au",
+  },
+  {
+    label: "Hongkong",
+    value: "hk",
+    flag: "hk",
   },
 ];

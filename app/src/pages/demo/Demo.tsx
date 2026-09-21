@@ -1,20 +1,96 @@
-import { Box, Grid, Typography } from "@mui/material";
+import {
+  Box,
+  Grid,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+  type SelectChangeEvent,
+} from "@mui/material";
 import { useState } from "react";
 import MapView from "../../components/MapView";
 import { type StateEvent } from "../../components/VietnamMapChart";
 import Layout from "../container/Layout";
+import { COUNTRIES_OPTIONS } from "./constant";
 
 export default function Demo() {
   const [states, setStates] = useState<StateEvent[]>([]);
+  const [countryCode, setCountryCode] = useState("world");
   return (
     <Layout>
-      <Box sx={{ py: 5, mx: "auto" }}>
-        <Typography variant="h2">Những nơi đã đến</Typography>
-      </Box>
       <Grid spacing={2} container>
         <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
         <Grid size={{ md: 6, sm: 10, xs: 12 }}>
-          <MapView onChange={(states) => setStates(states)} />
+          <Stack
+            direction="row"
+            sx={{ py: 5, justifyContent: "space-between" }}
+          >
+            <Box>
+              <Typography variant="h2">Những nơi đã đến</Typography>
+            </Box>
+            <Box>
+              <Select
+                fullWidth
+                value={countryCode}
+                onChange={(event: SelectChangeEvent) => {
+                  setCountryCode(event.target.value);
+                }}
+                renderValue={(selected) => {
+                  const selectedCountry = COUNTRIES_OPTIONS.find(
+                    (c) => c.value === selected,
+                  );
+                  if (!selectedCountry) return null;
+                  return (
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      {selectedCountry.flag && (
+                        <Box
+                          component="img"
+                          src={`https://flags.restcountries.com/v5/svg/${selectedCountry.flag}.svg`}
+                          alt="description"
+                          sx={{
+                            width: 20,
+                            border: "1px solid #ddd",
+                            mr: 1,
+                            flexShrink: 0,
+                            display: "block",
+                          }}
+                        />
+                      )}
+                      <Box component="span">{selectedCountry.label}</Box>
+                    </Box>
+                  );
+                }}
+              >
+                {COUNTRIES_OPTIONS.map((c) => (
+                  <MenuItem
+                    key={c.value}
+                    value={c.value}
+                    sx={{ display: "flex", alignItems: "center" }}
+                  >
+                    {c.flag && (
+                      <Box
+                        component="img"
+                        src={`https://flags.restcountries.com/v5/svg/${c.flag}.svg`}
+                        alt="description"
+                        sx={{
+                          width: 20,
+                          border: "1px solid #ddd",
+                          mr: 1,
+                          flexShrink: 0,
+                          display: "block",
+                        }}
+                      />
+                    )}
+                    {c.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          </Stack>
+          <MapView
+            countryCode={countryCode}
+            onChange={(states) => setStates(states)}
+          />
         </Grid>
         <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
       </Grid>

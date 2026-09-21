@@ -6,13 +6,10 @@ import {
   CircularProgress,
   FormControlLabel,
   IconButton,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   Tooltip,
   Typography,
-  type SelectChangeEvent,
 } from "@mui/material";
 import type { EChartsOption } from "echarts";
 import * as echarts from "echarts";
@@ -22,6 +19,7 @@ import {
   Bookmark,
   Camera,
   ChartPie,
+  Info,
   RotateCcw,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -31,7 +29,6 @@ import {
   ThreadsIcon,
   ThreadsShareButton,
 } from "react-share";
-import { COUNTRIES_OPTIONS } from "./../pages/demo/constant";
 import { useModal } from "./../shared/components/BaseModal/modal";
 import { useToast } from "./../shared/components/BaseToast/toast";
 import { Utils } from "./../shared/utils/helper";
@@ -70,10 +67,11 @@ export type StateEvent = {
 };
 
 type MapViewProps = {
+  countryCode: string;
   onChange?: (states: StateEvent[]) => void;
 };
 
-export default function MapView({ onChange }: MapViewProps) {
+export default function MapView({ onChange, countryCode }: MapViewProps) {
   const [ready, setReady] = useState(false);
   const [states, setState] = useState([]);
   const [selectedProvinces, setSelectedProvinces] = useState<StateEvent[]>([]);
@@ -81,7 +79,6 @@ export default function MapView({ onChange }: MapViewProps) {
   const showToast = useToast((state) => state.showToast);
   const hideModal = useModal((s) => s.hideModal);
   const showModal = useModal((state) => state.showModal);
-  const [countryCode, setCountryCode] = useState("world");
   const [isShowStats, setIsShowStats] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [publicUrl, setPublicUrl] = useState("");
@@ -131,7 +128,7 @@ export default function MapView({ onChange }: MapViewProps) {
             show: showLabel,
           },
           roam: true,
-          scaleLimit: { min: 1, max: 8 },
+          scaleLimit: { min: 1, max: 30 },
           data: states,
           itemStyle: {
             borderWidth: 1,
@@ -493,7 +490,7 @@ export default function MapView({ onChange }: MapViewProps) {
         }}
         spacing={4}
       >
-        <Select
+        {/* <Select
           fullWidth
           value={countryCode}
           onChange={(event: SelectChangeEvent) => {
@@ -549,14 +546,22 @@ export default function MapView({ onChange }: MapViewProps) {
               {c.label}
             </MenuItem>
           ))}
-        </Select>
+        </Select> */}
         <Box
           sx={{
             width: "100%",
           }}
         >
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Chạm để chọn nơi đã đến — kéo và chụm hai ngón để phóng to bản đồ.
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+          >
+            <span>
+              <Info size={16} />
+            </span>
+            <span>
+              Chạm để chọn nơi đã đến — kéo và chụm hai ngón để phóng to bản đồ.
+            </span>
           </Typography>
           <Paper
             elevation={4}
