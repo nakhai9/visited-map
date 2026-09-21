@@ -119,6 +119,11 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
           return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh || p?.name || "Chưa có dữ liệu"}</div>`;
         },
       },
+      label: {
+        show: showLabel,
+        color: "#9a3412",
+        z: 99,
+      },
       series: [
         {
           type: "map",
@@ -132,8 +137,8 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
           data: states,
           itemStyle: {
             borderWidth: 1,
-            borderColor: "#FFFFFF",
-            areaColor: COLORS.inactive,
+            borderColor: "#222222",
+            areaColor: "transparent",
           },
 
           selectedMode: "multiple",
@@ -143,22 +148,20 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
               show: false,
             },
             itemStyle: {
-              areaColor: COLORS.active,
+              areaColor: "#c2410c",
             },
           },
 
           select: {
             label: {
-              show: showLabel,
-              color: showLabel ? "#FFFFFF" : "#475569",
-              z: 10,
-              textShadowColor: "rgba(0, 0, 0, 0.4)",
-              textShadowBlur: 4,
-              textShadowOffsetX: 1,
-              textShadowOffsetY: 1,
+              show: true, // luôn hiện khi được chọn
+              color: "#FFFFFF", // chữ trắng trên nền nâu
+              z: 99,
+              textBorderColor: "rgba(0,0,0,0.3)",
+              textBorderWidth: 2,
             },
             itemStyle: {
-              areaColor: COLORS.active,
+              areaColor: "#9a3412",
             },
           },
         },
@@ -490,63 +493,6 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
         }}
         spacing={4}
       >
-        {/* <Select
-          fullWidth
-          value={countryCode}
-          onChange={(event: SelectChangeEvent) => {
-            setCountryCode(event.target.value);
-            setSelectedProvinces([]);
-          }}
-          renderValue={(selected) => {
-            const selectedCountry = COUNTRIES_OPTIONS.find(
-              (c) => c.value === selected,
-            );
-            if (!selectedCountry) return null;
-            return (
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                {selectedCountry.flag && (
-                  <Box
-                    component="img"
-                    src={`https://flags.restcountries.com/v5/svg/${selectedCountry.flag}.svg`}
-                    alt="description"
-                    sx={{
-                      width: 20,
-                      border: "1px solid #ddd",
-                      mr: 1,
-                      flexShrink: 0,
-                      display: "block",
-                    }}
-                  />
-                )}
-                <Box component="span">{selectedCountry.label}</Box>
-              </Box>
-            );
-          }}
-        >
-          {COUNTRIES_OPTIONS.map((c) => (
-            <MenuItem
-              key={c.value}
-              value={c.value}
-              sx={{ display: "flex", alignItems: "center" }}
-            >
-              {c.flag && (
-                <Box
-                  component="img"
-                  src={`https://flags.restcountries.com/v5/svg/${c.flag}.svg`}
-                  alt="description"
-                  sx={{
-                    width: 20,
-                    border: "1px solid #ddd",
-                    mr: 1,
-                    flexShrink: 0,
-                    display: "block",
-                  }}
-                />
-              )}
-              {c.label}
-            </MenuItem>
-          ))}
-        </Select> */}
         <Box
           sx={{
             width: "100%",
@@ -572,7 +518,8 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
                 md: HEIGHT,
               },
               width: "100%",
-              bgcolor: "#F4F4FD",
+              backgroundImage:
+                "url('https://cdn.pixabay.com/photo/2015/12/03/08/50/paper-1074131_1280.jpg')",
               position: "relative",
               border: "1px solid #e5e7eb",
               display: "flex",

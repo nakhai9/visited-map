@@ -1,4 +1,5 @@
 import Demo from "../pages/demo/Demo";
+import Scrapbook from "../pages/scrapbook/Scrapbook";
 
 export interface RoutePropsI {
   name: string;
@@ -13,5 +14,11 @@ export const ROUTES: RoutePropsI[] = [
     path: "/",
     key: "demo",
     component: Demo,
+  },
+  {
+    name: "Scrapbook",
+    path: "/scrapbook",
+    key: "scrapbook",
+    component: Scrapbook,
   },
 ];
