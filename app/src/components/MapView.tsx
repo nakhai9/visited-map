@@ -119,11 +119,11 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
           return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh || p?.name || "Chưa có dữ liệu"}</div>`;
         },
       },
-      label: {
-        show: showLabel,
-        color: "#9a3412",
-        z: 99,
-      },
+      // label: {
+      //   show: showLabel,
+      //   color: "#9a3412",
+      //   z: 99,
+      // },
       series: [
         {
           type: "map",
