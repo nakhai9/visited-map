@@ -39,7 +39,7 @@ export default function GoogleLoginButton() {
       }
 
       const result = await response.json();
-      setUser(result);
+      setUser(result.data);
       hideModal();
     } catch (error) {
       console.error(error);
