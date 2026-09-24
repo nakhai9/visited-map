@@ -1,4 +1,3 @@
-import GoogleIcon from "@mui/icons-material/Google";
 import {
   Box,
   Button,
@@ -32,6 +31,7 @@ import {
 import { useModal } from "./../shared/components/BaseModal/modal";
 import { useToast } from "./../shared/components/BaseToast/toast";
 import { Utils } from "./../shared/utils/helper";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 const SIZE = 560;
 const WIDTH = SIZE;
@@ -310,9 +310,7 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
             <Typography variant="subtitle1" sx={{ mb: 1, textAlign: "center" }}>
               Bạn cần đăng nhập để sử dụng chức năng này
             </Typography>
-            <Button fullWidth startIcon={<GoogleIcon />} variant="outlined">
-              Google
-            </Button>
+            <GoogleLoginButton />
           </Box>
         ),
       });
