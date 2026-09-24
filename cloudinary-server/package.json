@@ -17,9 +17,13 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "firebase": "^12.19.0",
+    "firebase-admin": "^14.4.0",
     "mongoose": "^9.2.1",
     "multer": "^2.0.2",
+    "mysql2": "^3.24.4",
     "nodemon": "^3.1.11",
+    "sequelize": "^6.37.8",
     "streamifier": "^0.1.1"
   }
 }

@@ -5,7 +5,17 @@ const bodyParser = require("body-parser")
 
 const uploadRouter = require("./routes/upload");
 const checkHealthRouter = require("./routes/health");
+const authWithGoogleRouter  = require("./routes/authWithGoogle");
+const userRouter = require("./routes/user");
+const sequelize = require("./configs/databaseConfig");
+require("./models/User");
 const app = express();
+
+sequelize.authenticate()
+    .then(() => console.log("Kết nối MySQL thành công"))
+    .catch((err) => console.error("Kết nối MySQL thất bại:", err.message));
+
+sequelize.sync().then(() => console.log("MySQL synced")).catch((err) => console.error("MySQL sync error:", err));
 
 // Middleware parse JSON
 app.use(express.json());
@@ -26,6 +36,9 @@ app.get("/api/hello", (req, res) => {
 
 app.use("/health", checkHealthRouter)
 app.use("/api/upload/", uploadRouter);
+
+app.use("/api/auth/google", authWithGoogleRouter);
+app.use("/api/users", userRouter);
 
 // Start server
 app.listen(process.env.PORT, () => {
