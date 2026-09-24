@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Box,
   Grid,
   MenuItem,
@@ -11,16 +12,18 @@ import { useState } from "react";
 import MapView from "../../components/MapView";
 import { type StateEvent } from "../../components/VietnamMapChart";
 import Layout from "../container/Layout";
+import { useAuth } from "./../../shared/hooks/useAuth";
 import { COUNTRIES_OPTIONS } from "./constant";
 
 export default function Demo() {
   const [states, setStates] = useState<StateEvent[]>([]);
   const [countryCode, setCountryCode] = useState("world");
+  const { user } = useAuth();
   return (
     <Layout>
       <Grid spacing={2} container>
-        <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
-        <Grid size={{ md: 6, sm: 10, xs: 12 }}>
+        <Grid size={{ md: 2, sm: 1, xs: 12 }}></Grid>
+        <Grid size={{ md: 8, sm: 10, xs: 12 }}>
           <Stack
             direction="row"
             sx={{ py: 5, justifyContent: "space-between" }}
@@ -28,7 +31,7 @@ export default function Demo() {
             <Box>
               <Typography variant="h2">Scrapbook</Typography>
             </Box>
-            <Box>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               <Select
                 fullWidth
                 value={countryCode}
@@ -85,6 +88,10 @@ export default function Demo() {
                   </MenuItem>
                 ))}
               </Select>
+
+              {user && (
+                <Avatar alt={user?.name ?? "UN"} src={user?.avatar ?? ""} />
+              )}
             </Box>
           </Stack>
           <MapView
@@ -92,7 +99,7 @@ export default function Demo() {
             onChange={(states) => setStates(states)}
           />
         </Grid>
-        <Grid size={{ md: 3, sm: 1, xs: 12 }}></Grid>
+        <Grid size={{ md: 2, sm: 1, xs: 12 }}></Grid>
       </Grid>
     </Layout>
   );

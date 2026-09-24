@@ -1,18 +1,21 @@
 import GoogleIcon from "@mui/icons-material/Google";
 import { Button } from "@mui/material";
 import { useState } from "react";
+import { useModal } from "./../shared/components/BaseModal/modal";
 import { SYSTEM_APIS } from "./../shared/configs/api";
 import { signInWithGooglePopup } from "./../shared/configs/firebaseConfig";
+import { useAuth } from "./../shared/hooks/useAuth";
 
 export default function GoogleLoginButton() {
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const { setUser } = useAuth();
+  const { hideModal } = useModal();
+
   const logGoogleUser = async () => {
     setIsSigningIn(true);
     try {
       const response = await signInWithGooglePopup();
       const idToken = await response.user.getIdToken();
-      console.log(response);
-      console.log(idToken);
       await sendIdTokenToServer(idToken);
     } catch (error) {
       console.error(error);
@@ -36,6 +39,8 @@ export default function GoogleLoginButton() {
       }
 
       const result = await response.json();
+      setUser(result);
+      hideModal();
     } catch (error) {
       console.error(error);
     }
