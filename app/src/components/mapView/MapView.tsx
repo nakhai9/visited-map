@@ -3,12 +3,15 @@ import {
   Button,
   Checkbox,
   CircularProgress,
+  Drawer,
   FormControlLabel,
   IconButton,
   Paper,
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import type { EChartsOption } from "echarts";
 import * as echarts from "echarts";
@@ -17,9 +20,10 @@ import {
   ArrowDownToLine,
   Bookmark,
   Camera,
-  ChartPie,
-  Info,
+  CircleUserRound,
+  MapPinned,
   RotateCcw,
+  Settings,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -28,23 +32,11 @@ import {
   ThreadsIcon,
   ThreadsShareButton,
 } from "react-share";
-import { useModal } from "./../shared/components/BaseModal/modal";
-import { useToast } from "./../shared/components/BaseToast/toast";
-import { Utils } from "./../shared/utils/helper";
-import GoogleLoginButton from "./GoogleLoginButton";
-
-const SIZE = 560;
-const WIDTH = SIZE;
-const HEIGHT = 520;
-const MIN_HEIGHT = 380;
-
-const COLORS = {
-  frame: "#F4F4FD",
-  active: "#6C63D9",
-  border: "#FFFFFF",
-  inactive: "#C9C3F7",
-  inactiveHover: "#B3A9F3",
-};
+import { useModal } from "../../shared/components/BaseModal/modal";
+import { useToast } from "../../shared/components/BaseToast/toast";
+import { Utils } from "../../shared/utils/helper";
+import GoogleLoginButton from "../GoogleLoginButton";
+import { COLORS } from "./constants";
 
 export interface ProvinceProperties {
   codename: string;
@@ -66,12 +58,19 @@ export type StateEvent = {
   name: string;
 };
 
+type MapSettings = {
+  showLabel: boolean;
+  showStats: boolean;
+};
+
 type MapViewProps = {
   countryCode: string;
   onChange?: (states: StateEvent[]) => void;
 };
 
 export default function MapView({ onChange, countryCode }: MapViewProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [ready, setReady] = useState(false);
   const [states, setState] = useState([]);
   const [selectedProvinces, setSelectedProvinces] = useState<StateEvent[]>([]);
@@ -85,6 +84,11 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
   const [isFlashing, setIsFlashing] = useState(false);
   const timeoutRef = useRef(0);
   const cameraSoundRef = useRef<HTMLAudioElement | null>(null);
+  const [settings, setSettings] = useState<MapSettings>({
+    showLabel: false,
+    showStats: false,
+  });
+  const [isOpenSetting, setIsOpenSetting] = useState(false);
 
   const chartRef = useRef<ReactECharts>(null);
 
@@ -119,11 +123,6 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
           return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh || p?.name || "Chưa có dữ liệu"}</div>`;
         },
       },
-      // label: {
-      //   show: showLabel,
-      //   color: "#9a3412",
-      //   z: 99,
-      // },
       series: [
         {
           type: "map",
@@ -134,11 +133,15 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
           },
           roam: true,
           scaleLimit: { min: 1, max: 30 },
-          data: states,
+          data: states.map((state: any) =>
+            ["hoang_sa", "truong_sa"].includes(state.codename)
+              ? { ...state, itemStyle: { borderColor: "#000000" } }
+              : state,
+          ),
           itemStyle: {
             borderWidth: 1,
-            borderColor: "#222222",
-            areaColor: "transparent",
+            borderColor: "#ffffff",
+            areaColor: "#a5b4fc",
           },
 
           selectedMode: "multiple",
@@ -148,20 +151,20 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
               show: false,
             },
             itemStyle: {
-              areaColor: "#c2410c",
+              areaColor: "#EAE8FC",
             },
           },
 
           select: {
             label: {
-              show: true, // luôn hiện khi được chọn
-              color: "#FFFFFF", // chữ trắng trên nền nâu
+              show: false,
+              color: "#FFFFFF",
               z: 99,
               textBorderColor: "rgba(0,0,0,0.3)",
               textBorderWidth: 2,
             },
             itemStyle: {
-              areaColor: "#9a3412",
+              areaColor: "#9790EE",
             },
           },
         },
@@ -355,6 +358,13 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
 
   const noSelection = !selectedProvinces.length;
 
+  const totalSelectableProvinces = states.filter(
+    (s: any) => !["hoang_sa", "truong_sa"].includes(s.codename),
+  ).length;
+  const statsPercent = totalSelectableProvinces
+    ? Math.round((selectedProvinces.length * 100) / totalSelectableProvinces)
+    : 0;
+
   const MAP_ACTIONS = [
     {
       icon: Camera,
@@ -379,48 +389,27 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
       title: "Tải xuống",
     },
     {
-      icon: ChartPie,
-      onClick: () => setIsShowStats(!isShowStats),
-      disabled: false,
-      isHidden: false,
-      title: "Thống kê",
-    },
-    {
       icon: Bookmark,
       onClick: handleSave,
       disabled: false,
       isHidden: false,
       title: "Ghi nhớ",
     },
+    {
+      icon: Settings,
+      onClick: () => toggleSettingSidebar(true),
+      disabled: false,
+      isHidden: false,
+      title: "Cài đặt",
+    },
+    {
+      icon: CircleUserRound,
+      onClick: () => {},
+      disabled: false,
+      isHidden: false,
+      title: "Tài khoản",
+    },
   ];
-
-  const handleZoomIn = () => {
-    const chart = chartRef.current?.getEchartsInstance();
-    if (!chart) return;
-
-    chart.dispatchAction({
-      type: "geoRoam",
-      componentType: "series",
-      seriesIndex: 0,
-      zoom: 1.2,
-      originX: chart.getWidth() / 2,
-      originY: chart.getHeight() / 2,
-    });
-  };
-
-  const handleZoomOut = () => {
-    const chart = chartRef.current?.getEchartsInstance();
-    if (!chart) return;
-
-    chart.dispatchAction({
-      type: "geoRoam",
-      componentType: "series",
-      seriesIndex: 0,
-      zoom: 1 / 1.2,
-      originX: chart.getWidth() / 2,
-      originY: chart.getHeight() / 2,
-    });
-  };
 
   const handleUploadFile = async (file: File | null) => {
     if (!file) return;
@@ -467,6 +456,28 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
     });
   };
 
+  const toggleSettingSidebar = (isToggle: boolean) => {
+    if (isToggle) {
+      setSettings({ showLabel, showStats: isShowStats });
+    }
+    setIsOpenSetting(isToggle);
+  };
+
+  const handleUpdateSettings = (key: keyof MapSettings, value: boolean) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleApply = () => {
+    setShowLabel(settings.showLabel);
+    setIsShowStats(settings.showStats);
+    toggleSettingSidebar(false);
+
+    showToast({
+      message: "Áp dụng cài đặt thành công",
+      severity: "success",
+    });
+  };
+
   useEffect(() => {
     setReady(false);
     fecthAndRegisterGeoData().then(() => setReady(true));
@@ -484,192 +495,186 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
 
   return (
     <>
-      <Stack
-        direction="column"
+      <Box
         sx={{
-          alignItems: "center",
+          width: "100%",
+          height: "100%",
+          position: "relative",
         }}
-        spacing={4}
       >
-        <Box
+        {ready ? (
+          <ReactECharts
+            key={countryCode}
+            option={chartOptions}
+            style={{ height: "100%", width: "100%" }}
+            onEvents={onEvents}
+            ref={chartRef}
+          />
+        ) : (
+          <CircularProgress aria-label="Loading…" />
+        )}
+        <Paper
+          elevation={2}
           sx={{
-            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            zIndex: 99,
+            position: "absolute",
+            top: isMobile ? 20 : 80,
+            right: isMobile ? 20 : 80,
+            border: "1px solid #dddd",
+            borderRadius: 99,
+            p: 2,
           }}
         >
-          <Typography
-            variant="subtitle2"
-            sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-          >
-            <span>
-              <Info size={16} />
-            </span>
-            <span>
-              Chạm để chọn nơi đã đến — kéo và chụm hai ngón để phóng to bản đồ.
-            </span>
-          </Typography>
+          {MAP_ACTIONS.map(
+            ({ icon: Icon, onClick, disabled, color, isHidden, title }, i) => (
+              <Tooltip key={i} title={title} placement="right">
+                <IconButton
+                  onClick={onClick}
+                  disabled={disabled}
+                  sx={{
+                    bgcolor: "#f1f5f9",
+                    border: "1px solid #dddd",
+                    ...(color && { color }),
+                    display: isHidden ? "none" : "block",
+                  }}
+                >
+                  <Icon size={16} />
+                </IconButton>
+              </Tooltip>
+            ),
+          )}
+        </Paper>
+
+        {isShowStats && (
           <Paper
-            elevation={4}
+            elevation={2}
             sx={{
-              height: {
-                xs: MIN_HEIGHT,
-                sm: 460,
-                md: HEIGHT,
-              },
-              width: "100%",
-              backgroundImage:
-                "url('https://cdn.pixabay.com/photo/2015/12/03/08/50/paper-1074131_1280.jpg')",
-              position: "relative",
-              border: "1px solid #e5e7eb",
+              position: "absolute",
+              top: 10,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 99,
               display: "flex",
-              justifyContent: "center",
               alignItems: "center",
+              gap: 1.5,
+              borderRadius: 99,
+              px: 2,
+              py: 1,
             }}
           >
-            {ready ? (
-              <ReactECharts
-                key={countryCode}
-                option={chartOptions}
-                style={{ height: "100%", width: "100%" }}
-                onEvents={onEvents}
-                ref={chartRef}
-              />
-            ) : (
-              <CircularProgress aria-label="Loading…" />
-            )}
             <Box
               sx={{
+                width: 32,
+                height: 32,
+                flexShrink: 0,
+                borderRadius: "50%",
+                bgcolor: "#22c55e",
                 display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                zIndex: 99,
-                position: "absolute",
-                top: 10,
-                right: 8,
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              {MAP_ACTIONS.map(
-                (
-                  { icon: Icon, onClick, disabled, color, isHidden, title },
-                  i,
-                ) => (
-                  <Tooltip key={i} title={title} placement="right">
-                    <IconButton
-                      size="medium"
-                      onClick={onClick}
-                      disabled={disabled}
-                      sx={{
-                        bgcolor: "#FFFFFF",
-                        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                        ...(color && { color }),
-                        display: isHidden ? "none" : "block",
-                      }}
-                    >
-                      <Icon size={16} />
-                    </IconButton>
-                  </Tooltip>
-                ),
-              )}
+              <MapPinned size={16} color="#ffffff" />
             </Box>
-            {/* <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                zIndex: 99,
-                position: "absolute",
-                bottom: 10,
-                right: 8,
-              }}
-            >
-              <IconButton
-                size="medium"
-                onClick={handleZoomIn}
-                sx={{
-                  bgcolor: "#FFFFFF",
-                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                }}
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <Typography
+                sx={{ fontWeight: 700, fontSize: 14, whiteSpace: "nowrap" }}
               >
-                <Plus size={16} />
-              </IconButton>
-
-              <IconButton
-                size="medium"
-                onClick={handleZoomOut}
-                sx={{
-                  bgcolor: "#FFFFFF",
-                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                }}
-                disabled={Boolean(zoomLevel <= 1)}
-              >
-                <Minus size={16} />
-              </IconButton>
-            </Box> */}
-            {isShowStats && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 10,
-                  left: 8,
-                  width: 8,
-                  height: 100,
-                  borderRadius: 99,
-                  bgcolor: "#E4E4F5",
-                  overflow: "hidden",
-                  display: "flex",
-                  alignItems: "flex-end",
-                  zIndex: 99,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: `${(selectedProvinces.length * 100) / states.filter((s: any) => !["hoang_sa", "truong_sa"].includes(s.codename)).length}%`,
-                    borderRadius: 99,
-                    background:
-                      "linear-gradient(180deg, #6355E0 0%, #0E9C86 100%)",
-                    transition: "height 0.4s cubic-bezier(0.3, 0.8, 0.3, 1)",
-                  }}
-                />
-              </Box>
-            )}
-
-            <Box
-              sx={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                background: "white",
-                opacity: isFlashing ? 0.95 : 0,
-                pointerEvents: "none",
-                zIndex: 9999,
-                transition: isFlashing ? "none" : "opacity 0.08s ease-out",
-              }}
-            />
-          </Paper>
-        </Box>
-
-        <Box>
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={showLabel}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setShowLabel(e.target.checked)
-                }
-              />
-            }
-            label={
-              <Typography sx={{ fontSize: 12 }}>
-                Hiện tên{" "}
+                {selectedProvinces.length}{" "}
                 {countryCode === "world" ? "quốc gia" : "tỉnh/thành phố"}
               </Typography>
-            }
-          />
-        </Box>
-      </Stack>
+              <Box
+                sx={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  bgcolor: "#cbd5e1",
+                  flexShrink: 0,
+                }}
+              />
+              <Typography
+                sx={{ fontSize: 13, color: "#64748b", whiteSpace: "nowrap" }}
+              >
+                {statsPercent}% tổng số{" "}
+                {countryCode === "world" ? "thế giới" : "tỉnh/thành phố"}
+              </Typography>
+            </Stack>
+          </Paper>
+        )}
+
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "white",
+            opacity: isFlashing ? 0.95 : 0,
+            pointerEvents: "none",
+            zIndex: 9999,
+            transition: isFlashing ? "none" : "opacity 0.08s ease-out",
+          }}
+        />
+      </Box>
+      <Drawer
+        anchor={isMobile ? "bottom" : "right"}
+        open={isOpenSetting}
+        onClose={() => toggleSettingSidebar(false)}
+      >
+        <Stack spacing={4} sx={{ p: 4, minWidth: isMobile ? "auto" : 260 }}>
+          <Typography variant="h6">Cài đặt</Typography>
+          <Box>
+            <Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={settings.showLabel}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleUpdateSettings("showLabel", e.target.checked)
+                    }
+                  />
+                }
+                label={
+                  <Typography>
+                    Hiện tên{" "}
+                    {countryCode === "world" ? "quốc gia" : "tỉnh/thành phố"}
+                  </Typography>
+                }
+              />
+            </Box>
+            <Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={settings.showStats}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleUpdateSettings("showStats", e.target.checked)
+                    }
+                  />
+                }
+                label={<Typography>Hiện thống kê</Typography>}
+              />
+            </Box>
+          </Box>
+          <Button
+            sx={{
+              bgcolor: "#222222",
+              color: "#ffffff",
+              fontWeight: 600,
+              minWidth: 120,
+            }}
+            onClick={handleApply}
+          >
+            Áp dụng
+          </Button>
+        </Stack>
+      </Drawer>
     </>
   );
 }

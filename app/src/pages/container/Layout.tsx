@@ -10,11 +10,10 @@ export default function Layout({ children }: LayoutProps) {
     <Box
       sx={{
         minHeight: "100vh",
-        bgcolor: "background.default",
+        bgcolor: "#F4F4FD",
         color: "text.primary",
         display: "flex",
         flexDirection: "column",
-        p: { sm: 0, xs: 4 },
       }}
     >
       <Box

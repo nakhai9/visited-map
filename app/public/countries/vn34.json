@@ -6417,7 +6417,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "codename": "truong_sa", "name": "Trường Sa" },
+      "properties": { "codename": "truong_sa", "name": "Trường Sa (Việt Nam)" },
       "geometry": {
         "type": "MultiPolygon",
         "coordinates": [
@@ -9353,7 +9353,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "codename": "hoang_sa", "name": "Hoàng Sa" },
+      "properties": { "codename": "hoang_sa", "name": "Hoàng Sa (Việt Nam)" },
       "geometry": {
         "type": "MultiPolygon",
         "coordinates": [

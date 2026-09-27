@@ -1,4 +1,4 @@
-import Demo from "../pages/demo/Demo";
+import MapViewPage from "../pages/mapView/MapViewPage";
 import Scrapbook from "../pages/scrapbook/Scrapbook";
 
 export interface RoutePropsI {
@@ -10,10 +10,10 @@ export interface RoutePropsI {
 
 export const ROUTES: RoutePropsI[] = [
   {
-    name: "Demo",
+    name: "Home",
     path: "/",
-    key: "demo",
-    component: Demo,
+    key: "home",
+    component: MapViewPage,
   },
   {
     name: "Scrapbook",

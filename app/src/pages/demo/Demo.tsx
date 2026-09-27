@@ -9,7 +9,7 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import { useState } from "react";
-import MapView from "../../components/MapView";
+import MapView from "../../components/mapView/MapView";
 import { type StateEvent } from "../../components/VietnamMapChart";
 import Layout from "../container/Layout";
 import { useAuth } from "./../../shared/hooks/useAuth";
