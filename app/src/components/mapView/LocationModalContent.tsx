@@ -11,7 +11,9 @@ import {
 } from "@mui/material";
 import { useRef, useState } from "react";
 import BaseButton from "../../shared/components/BaseButton";
+import CameraCapture from "./CameraCapture";
 import { VISITED_COLORS, type LocationStyle } from "./constants";
+import { fileToThumbnail } from "./thumbnail";
 
 type LocationModalContentProps = {
   initialVisited: boolean;
@@ -32,34 +34,7 @@ const toDateInput = (iso?: string) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
-const THUMBNAIL_MAX_SIZE = 512;
 const MAX_FILE_SIZE_MB = 5;
-
-/** Đọc file ảnh, thu nhỏ về tối đa THUMBNAIL_MAX_SIZE rồi trả về data URL. */
-const fileToThumbnail = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        const scale = Math.min(
-          1,
-          THUMBNAIL_MAX_SIZE / Math.max(img.width, img.height),
-        );
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Canvas not supported"));
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.85));
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
 
 /** Nội dung modal khi click một tỉnh: đã đến + chọn màu hoặc thumbnail. */
 export default function LocationModalContent({
@@ -72,6 +47,12 @@ export default function LocationModalContent({
 }: LocationModalContentProps) {
   const [style, setStyle] = useState<LocationStyle>(initialStyle);
   const [visitedDate, setVisitedDate] = useState(toDateInput(initialVisitedAt));
+  // Nguồn nền đang chọn trên radio: màu, ảnh tải lên hoặc chụp bằng camera.
+  // Camera và ảnh tải lên đều cho ra thumbnail (style.mode = "thumbnail").
+  const [source, setSource] = useState<"color" | "thumbnail" | "camera">(
+    initialStyle.mode,
+  );
+  const [isRetaking, setIsRetaking] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -129,13 +110,16 @@ export default function LocationModalContent({
         </FormLabel>
         <RadioGroup
           row
-          value={style.mode}
-          onChange={(e) =>
+          value={source}
+          onChange={(e) => {
+            const next = e.target.value as typeof source;
+            setSource(next);
+            setIsRetaking(false);
             setStyle((prev) => ({
               ...prev,
-              mode: e.target.value as LocationStyle["mode"],
-            }))
-          }
+              mode: next === "color" ? "color" : "thumbnail",
+            }));
+          }}
         >
           <FormControlLabel value="color" control={<Radio />} label="Màu" />
           <FormControlLabel
@@ -143,9 +127,14 @@ export default function LocationModalContent({
             control={<Radio />}
             label="Thumbnail"
           />
+          <FormControlLabel
+            value="camera"
+            control={<Radio />}
+            label="Máy ảnh"
+          />
         </RadioGroup>
 
-        {style.mode === "color" && (
+        {source === "color" && (
           <Stack direction="row" spacing={1.5}>
             {VISITED_COLORS.map((color) => {
               const selected = style.color === color;
@@ -174,7 +163,38 @@ export default function LocationModalContent({
           </Stack>
         )}
 
-        {style.mode === "thumbnail" && (
+        {source === "camera" &&
+          (style.thumbnail && !isRetaking ? (
+            <Stack spacing={1.5} sx={{ alignItems: "center" }}>
+              <Box
+                component="img"
+                src={style.thumbnail}
+                alt="Ảnh vừa chụp"
+                sx={{
+                  width: "100%",
+                  maxHeight: 280,
+                  objectFit: "cover",
+                  borderRadius: 1,
+                }}
+              />
+              <BaseButton
+                variant="outlined"
+                size="small"
+                onClick={() => setIsRetaking(true)}
+              >
+                Chụp lại
+              </BaseButton>
+            </Stack>
+          ) : (
+            <CameraCapture
+              onCapture={(thumbnail) => {
+                setStyle((prev) => ({ ...prev, thumbnail }));
+                setIsRetaking(false);
+              }}
+            />
+          ))}
+
+        {source === "thumbnail" && (
           <Box
             onDragOver={(e) => {
               e.preventDefault();
