@@ -13,7 +13,7 @@ export default function BaseAppBar() {
         px: 3,
         display: "flex",
         alignItems: "center",
-        justifyContent: "flex-end",
+        justifyContent: { xs: "space-between", sm: "flex-end" },
         position: "relative",
         bgcolor: "#fff",
         borderBottom: "1px solid",
@@ -27,11 +27,14 @@ export default function BaseAppBar() {
           fontWeight: 700,
           fontSize: { xs: 22, md: 28 },
           lineHeight: 1,
-          position: "absolute",
-          left: "50%",
-          transform: "translateX(-50%)",
-          maxWidth: "50%",
-          textAlign: "center",
+          // Mobile: nằm trái cạnh user menu. Từ sm trở lên: căn giữa AppBar.
+          position: { xs: "static", sm: "absolute" },
+          left: { sm: "50%" },
+          transform: { sm: "translateX(-50%)" },
+          minWidth: 0,
+          mr: { xs: 2, sm: 0 },
+          maxWidth: { xs: "60%", sm: "50%" },
+          textAlign: { xs: "left", sm: "center" },
         }}
       >
         {user
