@@ -1,14 +1,11 @@
 import {
   Box,
-  Button,
   Checkbox,
   CircularProgress,
   Drawer,
   FormControlLabel,
-  IconButton,
   Paper,
   Stack,
-  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
@@ -32,31 +29,12 @@ import {
   ThreadsIcon,
   ThreadsShareButton,
 } from "react-share";
+import BaseButton from "../../shared/components/BaseButton";
 import { useModal } from "../../shared/components/BaseModal/modal";
 import { useToast } from "../../shared/components/BaseToast/toast";
 import { Utils } from "../../shared/utils/helper";
 import GoogleLoginButton from "../GoogleLoginButton";
-import { COLORS } from "./constants";
-
-export interface ProvinceProperties {
-  codename: string;
-  administrative_center: string;
-  name: string;
-  code: number;
-  ten_tinh: string;
-  sap_nhap: string;
-  tru_so: string;
-  loai: string;
-  cap: number;
-  lat: number;
-  lon: number;
-}
-
-export type StateEvent = {
-  codename: string;
-  code: number;
-  name: string;
-};
+import { COLORS, type LocationProperties, type StateEvent } from "./constants";
 
 type MapSettings = {
   showLabel: boolean;
@@ -119,7 +97,7 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
       tooltip: {
         trigger: "item",
         formatter: (params: any) => {
-          const p = params.data as ProvinceProperties | undefined;
+          const p = params.data as LocationProperties | undefined;
           return `<div style="font-family: Roboto, sans-serif; font-size: 13px;">${p?.ten_tinh || p?.name || "Chưa có dữ liệu"}</div>`;
         },
       },
@@ -280,7 +258,7 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
           spacing={2}
           sx={{ justifyContent: "flex-end", width: "100%" }}
         >
-          <Button
+          <BaseButton
             variant="contained"
             size="medium"
             sx={{ color: "#fffff !important", bgcolor: "#222222 !important" }}
@@ -288,15 +266,15 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
             disabled={!imageUrl}
           >
             Sao chép URL
-          </Button>
-          <Button
+          </BaseButton>
+          <BaseButton
             size="medium"
             variant="outlined"
             color="secondary"
             onClick={() => hideModal()}
           >
             Hủy
-          </Button>
+          </BaseButton>
         </Stack>
       ),
     });
@@ -313,7 +291,7 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
             <Typography variant="subtitle1" sx={{ mb: 1, textAlign: "center" }}>
               Bạn cần đăng nhập để sử dụng chức năng này
             </Typography>
-            <GoogleLoginButton />
+            <GoogleLoginButton fullWidth />
           </Box>
         ),
       });
@@ -495,11 +473,23 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
 
   return (
     <>
-      <Box
+      <Paper
+        elevation={1}
         sx={{
-          width: "100%",
-          height: "100%",
+          width: {
+            md: 726,
+            sm: 390,
+            xs: "100%",
+          },
+          height: {
+            md: 600,
+            sm: 390,
+            xs: 420,
+          },
           position: "relative",
+          bgcolor: "#FFFFFF",
+          mx: "auto",
+          my: "auto",
         }}
       >
         {ready ? (
@@ -513,40 +503,6 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
         ) : (
           <CircularProgress aria-label="Loading…" />
         )}
-        <Paper
-          elevation={2}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-            zIndex: 99,
-            position: "absolute",
-            top: isMobile ? 20 : 80,
-            right: isMobile ? 20 : 80,
-            border: "1px solid #dddd",
-            borderRadius: 99,
-            p: 2,
-          }}
-        >
-          {MAP_ACTIONS.map(
-            ({ icon: Icon, onClick, disabled, color, isHidden, title }, i) => (
-              <Tooltip key={i} title={title} placement="right">
-                <IconButton
-                  onClick={onClick}
-                  disabled={disabled}
-                  sx={{
-                    bgcolor: "#f1f5f9",
-                    border: "1px solid #dddd",
-                    ...(color && { color }),
-                    display: isHidden ? "none" : "block",
-                  }}
-                >
-                  <Icon size={16} />
-                </IconButton>
-              </Tooltip>
-            ),
-          )}
-        </Paper>
 
         {isShowStats && (
           <Paper
@@ -619,7 +575,7 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
             transition: isFlashing ? "none" : "opacity 0.08s ease-out",
           }}
         />
-      </Box>
+      </Paper>
       <Drawer
         anchor={isMobile ? "bottom" : "right"}
         open={isOpenSetting}
@@ -662,7 +618,7 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
               />
             </Box>
           </Box>
-          <Button
+          <BaseButton
             sx={{
               bgcolor: "#222222",
               color: "#ffffff",
@@ -672,7 +628,7 @@ export default function MapView({ onChange, countryCode }: MapViewProps) {
             onClick={handleApply}
           >
             Áp dụng
-          </Button>
+          </BaseButton>
         </Stack>
       </Drawer>
     </>

@@ -7,8 +7,10 @@ const uploadRouter = require("./routes/upload");
 const checkHealthRouter = require("./routes/health");
 const authWithGoogleRouter  = require("./routes/authWithGoogle");
 const userRouter = require("./routes/user");
+const scrapbookRouter = require("./routes/scrapbook");
 const sequelize = require("./configs/databaseConfig");
 require("./models/User");
+require("./models/associations");
 const app = express();
 
 sequelize.authenticate()
@@ -39,6 +41,7 @@ app.use("/api/upload/", uploadRouter);
 
 app.use("/api/auth/google", authWithGoogleRouter);
 app.use("/api/users", userRouter);
+app.use("/api/scrapbooks", scrapbookRouter);
 
 // Start server
 app.listen(process.env.PORT, () => {

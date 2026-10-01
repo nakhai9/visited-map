@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type IAuthUser = {
+export type IAuthUser = {
   id: number;
   firebaseUid: string;
   email: string;

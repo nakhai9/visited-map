@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import MapView from "../../components/mapView/MapView";
-import { type StateEvent } from "../../components/VietnamMapChart";
+import { type StateEvent } from "../../components/mapView/constants";
 import Layout from "../container/Layout";
 import { useAuth } from "./../../shared/hooks/useAuth";
 import { COUNTRIES_OPTIONS } from "./constant";

@@ -1,7 +1,8 @@
-import { Box } from "@mui/material";
+import { Box, Grid } from "@mui/material";
 import { useState } from "react";
-import MapView from "../../components/mapView/MapView";
-import { type StateEvent } from "../../components/VietnamMapChart";
+// import MapView from "../../components/mapView/MapView";
+import { type StateEvent } from "../../components/mapView/constants";
+import SvgMapView from "../../components/mapView/SvgMapView";
 import { useAuth } from "../../shared/hooks/useAuth";
 import Layout from "../container/Layout";
 
@@ -11,95 +12,24 @@ export default function MapViewPage() {
 
   const { user } = useAuth();
   return (
-    // <Layout>
-    //   <Grid spacing={2} container>
-    //     <Grid size={{ md: 2, sm: 1, xs: 12 }}></Grid>
-    //     <Grid size={{ md: 8, sm: 10, xs: 12 }}>
-    //       <Stack
-    //         direction="row"
-    //         sx={{ py: 5, justifyContent: "space-between" }}
-    //       >
-    //         <Box>
-    //           <Typography variant="h2">Scrapbook</Typography>
-    //         </Box>
-    //         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-    //           <Select
-    //             fullWidth
-    //             value={countryCode}
-    //             onChange={(event: SelectChangeEvent) => {
-    //               setCountryCode(event.target.value);
-    //             }}
-    //             renderValue={(selected) => {
-    //               const selectedCountry = COUNTRIES_OPTIONS.find(
-    //                 (c) => c.value === selected,
-    //               );
-    //               if (!selectedCountry) return null;
-    //               return (
-    //                 <Box sx={{ display: "flex", alignItems: "center" }}>
-    //                   {selectedCountry.flag && (
-    //                     <Box
-    //                       component="img"
-    //                       src={`https://flags.restcountries.com/v5/svg/${selectedCountry.flag}.svg`}
-    //                       alt="description"
-    //                       sx={{
-    //                         width: 20,
-    //                         border: "1px solid #ddd",
-    //                         mr: 1,
-    //                         flexShrink: 0,
-    //                         display: "block",
-    //                       }}
-    //                     />
-    //                   )}
-    //                   <Box component="span">{selectedCountry.label}</Box>
-    //                 </Box>
-    //               );
-    //             }}
-    //           >
-    //             {COUNTRIES_OPTIONS.map((c) => (
-    //               <MenuItem
-    //                 key={c.value}
-    //                 value={c.value}
-    //                 sx={{ display: "flex", alignItems: "center" }}
-    //               >
-    //                 {c.flag && (
-    //                   <Box
-    //                     component="img"
-    //                     src={`https://flags.restcountries.com/v5/svg/${c.flag}.svg`}
-    //                     alt="description"
-    //                     sx={{
-    //                       width: 20,
-    //                       border: "1px solid #ddd",
-    //                       mr: 1,
-    //                       flexShrink: 0,
-    //                       display: "block",
-    //                     }}
-    //                   />
-    //                 )}
-    //                 {c.label}
-    //               </MenuItem>
-    //             ))}
-    //           </Select>
-
-    //           {user && (
-    //             <Avatar alt={user?.name ?? "UN"} src={user?.avatar ?? ""} />
-    //           )}
-    //         </Box>
-    //       </Stack>
-    //       <MapView
-    //         countryCode={countryCode}
-    //         onChange={(states) => setStates(states)}
-    //       />
-    //     </Grid>
-    //     <Grid size={{ md: 2, sm: 1, xs: 12 }}></Grid>
-    //   </Grid>
-    // </Layout>
     <Layout>
-      <Box sx={{ height: "100vh", width: "100%" }}>
-        <MapView
-          countryCode={countryCode}
-          onChange={(states) => setStates(states)}
-        />
-      </Box>
+      <Grid container>
+        <Grid size={{ xs: 0, sm: 1, md: 2, lg: 3 }}></Grid>
+        <Grid size={{ xs: 12, sm: 10, md: 8, lg: 6 }}>
+          <Box
+            sx={{
+              height: "calc(100vh - 72px)",
+              width: "100%",
+            }}
+          >
+            <SvgMapView
+              countryCode={countryCode}
+              onChange={(states) => setStates(states)}
+            />
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 0, sm: 1, md: 2, lg: 3 }}></Grid>
+      </Grid>
     </Layout>
   );
 }
