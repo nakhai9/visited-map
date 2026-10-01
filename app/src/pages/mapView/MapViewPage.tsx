@@ -24,6 +24,7 @@ export default function MapViewPage() {
           >
             <SvgMapView
               countryCode={countryCode}
+              disableZoom
               onChange={(states) => setStates(states)}
             />
           </Box>

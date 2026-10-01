@@ -69,6 +69,8 @@ type SvgMapViewProps = {
   countryCode: string;
   /** Gọi mỗi khi danh sách tỉnh/quốc gia đã chọn thay đổi. */
   onChange?: (states: StateEvent[]) => void;
+  /** Tắt zoom in/out và pan (kéo) bản đồ. */
+  disableZoom?: boolean;
 };
 
 /** GeoJSON FeatureCollection, mỗi feature mang thông tin của một tỉnh/quốc gia. */
@@ -172,7 +174,11 @@ const rewindGeoData = (data: GeoData): GeoData => ({
  * MapView dùng ECharts. Hỗ trợ: chọn nhiều vùng, zoom/pan, hiện tên, thống kê,
  * tải ảnh PNG và chia sẻ lên mạng xã hội.
  */
-export default function SvgMapView({ onChange, countryCode }: SvgMapViewProps) {
+export default function SvgMapView({
+  onChange,
+  countryCode,
+  disableZoom = false,
+}: SvgMapViewProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   // --- State ---
@@ -816,6 +822,8 @@ export default function SvgMapView({ onChange, countryCode }: SvgMapViewProps) {
                   center={center}
                   minZoom={MIN_ZOOM}
                   maxZoom={MAX_ZOOM}
+                  // Trả false để d3-zoom bỏ qua mọi sự kiện zoom/pan (cuộn chuột, kéo, chạm, double-click).
+                  filterZoomEvent={disableZoom ? () => false : undefined}
                   onMove={({ zoom }) => zoom && setZoomLevel(zoom)}
                 >
                   <Geographies geography={geoData}>
