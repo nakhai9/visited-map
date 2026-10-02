@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../configs/databaseConfig");
 
-// Một scrapbook = bản đồ của một user cho một quốc gia/bản đồ (countryCode).
+// Một scrapbook = bản đồ của một user cho một bản đồ địa điểm (locationCode).
 const Scrapbook = sequelize.define(
     "Scrapbook",
     {
@@ -15,10 +15,10 @@ const Scrapbook = sequelize.define(
             allowNull: false,
             field: "user_id",
         },
-        countryCode: {
-            type: DataTypes.STRING(20),
+        locationCode: {
+            type: DataTypes.STRING(100),
             allowNull: false,
-            field: "country_code",
+            field: "location_code",
         },
         title: {
             type: DataTypes.STRING,
@@ -44,7 +44,7 @@ const Scrapbook = sequelize.define(
         updatedAt: "updated_at",
         charset: "utf8mb4",
         collate: "utf8mb4_unicode_ci",
-        indexes: [{ unique: true, name: "uq_scrapbook_user_country", fields: ["user_id", "country_code"] }],
+        indexes: [{ unique: true, name: "uq_scrapbook_user_location", fields: ["user_id", "location_code"] }],
     }
 );
 

@@ -9,7 +9,7 @@ const THUMB_PREFIX = "thumb_";
 
 const toResponse = (scrapbook) => ({
     id: scrapbook.id,
-    countryCode: scrapbook.countryCode,
+    locationCode: scrapbook.locationCode,
     title: scrapbook.title,
     showLabel: scrapbook.showLabel,
     showStats: scrapbook.showStats,
@@ -31,15 +31,15 @@ const findScrapbook = (where) =>
         order: [[{ model: ScrapbookLocation, as: "locations" }, "visited_at", "ASC"]],
     });
 
-// GET /api/scrapbooks?countryCode=vn34 -> scrapbook của user hiện tại (data = null nếu chưa có).
+// GET /api/scrapbooks?locationCode=vn34 -> scrapbook của user hiện tại (data = null nếu chưa có).
 const getMyScrapbook = async (req, res) => {
     try {
-        const { countryCode } = req.query;
-        if (!countryCode) {
-            return res.status(400).json(Response({ success: false, message: "Thiếu countryCode" }));
+        const { locationCode } = req.query;
+        if (!locationCode) {
+            return res.status(400).json(Response({ success: false, message: "Thiếu locationCode" }));
         }
 
-        const scrapbook = await findScrapbook({ userId: req.user.id, countryCode });
+        const scrapbook = await findScrapbook({ userId: req.user.id, locationCode });
         return res.status(200).json(Response({ success: true, data: scrapbook ? toResponse(scrapbook) : null }));
     } catch (error) {
         return res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
@@ -56,7 +56,7 @@ const parsePayload = (raw) => {
     } catch {
         throw fail("payload không phải JSON hợp lệ");
     }
-    if (!payload.countryCode) throw fail("Thiếu countryCode");
+    if (!payload.locationCode) throw fail("Thiếu locationCode");
     if (!Array.isArray(payload.visitedStates)) throw fail("visitedStates phải là mảng");
 
     const seen = new Set();
@@ -75,10 +75,10 @@ const parsePayload = (raw) => {
 };
 
 // POST /api/scrapbooks (multipart/form-data)
-//   payload: JSON { countryCode, title?, settings: { showLabel, showStats }, visitedStates: [...] }
+//   payload: JSON { locationCode, title?, settings: { showLabel, showStats }, visitedStates: [...] }
 //   thumb_<codename>: file ảnh thumbnail của địa điểm đó (chỉ gửi khi mới chọn/đổi ảnh)
 // areaStyle.areaBackground: nếu có file thumb_<codename> thì upload ảnh mới; nếu là URL đã lưu thì giữ nguyên.
-// Gọi lại sẽ thay toàn bộ danh sách địa điểm của scrapbook (upsert theo user + countryCode).
+// Gọi lại sẽ thay toàn bộ danh sách địa điểm của scrapbook (upsert theo user + locationCode).
 const saveScrapbook = async (req, res) => {
     const uploadedIds = []; // ảnh vừa upload, xoá lại nếu ghi DB lỗi
     try {
@@ -91,9 +91,9 @@ const saveScrapbook = async (req, res) => {
 
         const files = new Map((req.files ?? []).map((f) => [f.fieldname, f]));
         const userId = req.user.id;
-        const { countryCode } = payload;
+        const { locationCode } = payload;
 
-        const existing = await findScrapbook({ userId, countryCode });
+        const existing = await findScrapbook({ userId, locationCode });
         const oldByCodename = new Map((existing?.locations ?? []).map((l) => [l.codename, l]));
 
         // Upload ảnh mới trước khi mở transaction để không giữ transaction trong lúc chờ Cloudinary.
@@ -115,7 +115,7 @@ const saveScrapbook = async (req, res) => {
                 row.areaColor = areaColor;
             } else if (file) {
                 const result = await Utils.file.handleUploadToCloudinary(file, {
-                    public_id: `scrapbooks/${userId}/${countryCode}/${s.codename}`,
+                    public_id: `scrapbooks/${userId}/${locationCode}/${s.codename}`,
                     overwrite: true,
                     invalidate: true,
                 });
@@ -142,7 +142,7 @@ const saveScrapbook = async (req, res) => {
             };
             const target = existing
                 ? await existing.update(values, { transaction })
-                : await Scrapbook.create({ userId, countryCode, ...values }, { transaction });
+                : await Scrapbook.create({ userId, locationCode, ...values }, { transaction });
 
             await ScrapbookLocation.destroy({ where: { scrapbookId: target.id }, transaction });
             await ScrapbookLocation.bulkCreate(

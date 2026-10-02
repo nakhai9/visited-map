@@ -8,6 +8,15 @@ import BaseSelect from "../../shared/components/BaseSelect";
 import Layout from "../container/Layout";
 import { DEFAULT_PATH, VIETNAM_LOCATIONS } from "./constant";
 
+const HERO_IMAGES = [
+  {
+    src: "/1790925995904.png",
+    alt: "Bản đồ vùng đồng bằng gắn ảnh các địa điểm đã đến",
+  },
+  { src: "/1790926134480.png", alt: "Bản đồ Huế gắn ảnh di tích" },
+  { src: "/1790926175831.png", alt: "Bản đồ Việt Nam tô màu các tỉnh đã đến" },
+];
+
 const LOCATION_OPTIONS = VIETNAM_LOCATIONS.map(({ label, path }) => ({
   label,
   value: path,
@@ -23,9 +32,10 @@ export default function MapViewPage() {
     <Layout>
       <Box sx={{ my: 2 }}>
         <HeroSection
-          title="Đi nhiều hơn,"
-          highlight="nhớ lâu hơn"
-          description="Chạm vào tỉnh/thành để đánh dấu, tô màu hoặc gắn ảnh nơi đã đến."
+          title="34 tỉnh thành,"
+          highlight="bạn đã đến được mấy nơi?"
+          description="Chạm vào nơi đã đến, tô màu hoặc gắn ảnh nơi đã đến. Cùng khoe nó đến với bạn bè hoặc lưu lại cho riêng bạn"
+          images={HERO_IMAGES}
           actionLabel="Tạo bản đồ cho riêng bạn"
           onAction={() =>
             mapSectionRef.current?.scrollIntoView({ behavior: "smooth" })
