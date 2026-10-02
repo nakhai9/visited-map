@@ -34,6 +34,7 @@ export const TOKENS = {
   hover: "rgba(208, 136, 86, 0.12)",
   selected: "rgba(170, 33, 15, 0.10)",
   overlay: "rgba(65, 64, 60, 0.56)",
+  disabledBackground: "#f3f4f6",
 } as const;
 
 export type SurfaceToken = keyof typeof TOKENS;

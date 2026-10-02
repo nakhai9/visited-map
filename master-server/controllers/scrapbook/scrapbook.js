@@ -6,6 +6,8 @@ const Utils = require("../../utils/uploadUtils");
 const HEX_COLOR = /^#[0-9a-f]{6}([0-9a-f]{2})?$/i;
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const THUMB_PREFIX = "thumb_";
+// Các cài đặt hiển thị lưu theo scrapbook (cột boolean trong bảng scrapbooks).
+const SETTING_KEYS = ["showLabel", "showStats", "enableZoom", "enablePan"];
 
 const toResponse = (scrapbook) => ({
     id: scrapbook.id,
@@ -13,6 +15,8 @@ const toResponse = (scrapbook) => ({
     title: scrapbook.title,
     showLabel: scrapbook.showLabel,
     showStats: scrapbook.showStats,
+    enableZoom: scrapbook.enableZoom,
+    enablePan: scrapbook.enablePan,
     visitedStates: (scrapbook.locations ?? []).map((l) => ({
         codename: l.codename,
         name: l.name,
@@ -75,7 +79,7 @@ const parsePayload = (raw) => {
 };
 
 // POST /api/scrapbooks (multipart/form-data)
-//   payload: JSON { locationCode, title?, settings: { showLabel, showStats }, visitedStates: [...] }
+//   payload: JSON { locationCode, title?, settings: { showLabel, showStats, enableZoom, enablePan }, visitedStates: [...] }
 //   thumb_<codename>: file ảnh thumbnail của địa điểm đó (chỉ gửi khi mới chọn/đổi ảnh)
 // areaStyle.areaBackground: nếu có file thumb_<codename> thì upload ảnh mới; nếu là URL đã lưu thì giữ nguyên.
 // Gọi lại sẽ thay toàn bộ danh sách địa điểm của scrapbook (upsert theo user + locationCode).
@@ -137,8 +141,7 @@ const saveScrapbook = async (req, res) => {
         const scrapbook = await sequelize.transaction(async (transaction) => {
             const values = {
                 title: payload.title ?? null,
-                showLabel: Boolean(settings.showLabel),
-                showStats: Boolean(settings.showStats),
+                ...Object.fromEntries(SETTING_KEYS.map((key) => [key, Boolean(settings[key])])),
             };
             const target = existing
                 ? await existing.update(values, { transaction })
@@ -167,6 +170,37 @@ const saveScrapbook = async (req, res) => {
     }
 };
 
+// PATCH /api/scrapbooks/settings (JSON) { locationCode, settings: { showLabel?, showStats?, enableZoom?, enablePan? } }
+// Chỉ cập nhật các cài đặt được gửi, không đụng tới danh sách địa điểm; chưa có scrapbook thì tạo mới (rỗng).
+const updateMyScrapbookSettings = async (req, res) => {
+    try {
+        const { locationCode, settings } = req.body ?? {};
+        if (!locationCode) {
+            return res.status(400).json(Response({ success: false, message: "Thiếu locationCode" }));
+        }
+        const values = Object.fromEntries(
+            SETTING_KEYS.filter((key) => typeof settings?.[key] === "boolean").map((key) => [key, settings[key]])
+        );
+        if (!Object.keys(values).length) {
+            return res
+                .status(400)
+                .json(Response({ success: false, message: `settings cần ít nhất một trong: ${SETTING_KEYS.join(", ")}` }));
+        }
+
+        const userId = req.user.id;
+        const [scrapbook, created] = await Scrapbook.findOrCreate({
+            where: { userId, locationCode },
+            defaults: values,
+        });
+        if (!created) await scrapbook.update(values);
+
+        const saved = await findScrapbook({ id: scrapbook.id });
+        return res.status(200).json(Response({ success: true, data: toResponse(saved) }));
+    } catch (error) {
+        return res.status(500).json({ message: "Lưu cài đặt thất bại", error: error.message });
+    }
+};
+
 // DELETE /api/scrapbooks/:id -> chỉ chủ sở hữu mới xoá được.
 const deleteScrapbook = async (req, res) => {
     try {
@@ -185,4 +219,4 @@ const deleteScrapbook = async (req, res) => {
     }
 };
 
-module.exports = { getMyScrapbook, saveScrapbook, deleteScrapbook };
+module.exports = { getMyScrapbook, saveScrapbook, updateMyScrapbookSettings, deleteScrapbook };

@@ -36,6 +36,18 @@ const Scrapbook = sequelize.define(
             defaultValue: false,
             field: "show_stats",
         },
+        enableZoom: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            field: "enable_zoom",
+        },
+        enablePan: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            field: "enable_pan",
+        },
     },
     {
         tableName: "scrapbooks",

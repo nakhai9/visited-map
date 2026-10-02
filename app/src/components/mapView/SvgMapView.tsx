@@ -44,7 +44,9 @@ import { useAuth } from "../../shared/hooks/useAuth";
 import {
   fetchScrapbook,
   saveScrapbook,
+  saveScrapbookSettings,
   type Scrapbook,
+  type ScrapbookSettings,
 } from "../../shared/services/scrapbookService";
 import { Utils } from "../../shared/utils/helper";
 import GoogleLoginButton from "../GoogleLoginButton";
@@ -58,19 +60,17 @@ import {
 } from "./constants";
 import LocationModalContent from "./LocationModalContent";
 
-/** Các tuỳ chọn trong Drawer cài đặt (chỉ áp dụng lên bản đồ khi bấm "Áp dụng"). */
-type MapSettings = {
-  showLabel: boolean;
-  showStats: boolean;
-};
+/**
+ * Các tuỳ chọn trong Drawer cài đặt (chỉ áp dụng lên bản đồ khi bấm "Áp dụng").
+ * enableZoom: cuộn chuột, double-click/double-tap, pinch 2 ngón; enablePan: kéo bằng chuột hoặc 1 ngón.
+ */
+type MapSettings = ScrapbookSettings;
 
 type SvgMapViewProps = {
   /** Tên file trong `/public/countries/{locationCode}.json` (vd: "vn", "world"). */
   locationCode: string;
   /** Gọi mỗi khi danh sách tỉnh/thành phố đã chọn thay đổi. */
   onChange?: (states: StateEvent[]) => void;
-  /** Tắt zoom in/out và pan (kéo) bản đồ. */
-  disableZoom?: boolean;
 };
 
 /** GeoJSON FeatureCollection, mỗi feature mang thông tin của một tỉnh/thành phố. */
@@ -177,7 +177,6 @@ const rewindGeoData = (data: GeoData): GeoData => ({
 export default function SvgMapView({
   onChange,
   locationCode,
-  disableZoom = false,
 }: SvgMapViewProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -192,16 +191,20 @@ export default function SvgMapView({
   const [hoveredName, setHoveredName] = useState("");
   const [showLabel, setShowLabel] = useState(false);
   const [isShowStats, setIsShowStats] = useState(false);
+  const [enableZoom, setEnableZoom] = useState(false);
+  const [enablePan, setEnablePan] = useState(false);
   // Mức zoom hiện tại: dùng để giữ độ dày viền và cỡ chữ nhãn không đổi khi zoom.
   const [zoomLevel, setZoomLevel] = useState(1);
   // Đổi key để remount ZoomableGroup => đưa zoom/pan về trạng thái ban đầu.
   const [resetKey, setResetKey] = useState(0);
   // Hiệu ứng flash trắng khi "chụp ảnh".
   const [isFlashing, setIsFlashing] = useState(false);
-  // Bản nháp cài đặt trong Drawer, chỉ ghi vào showLabel/isShowStats khi bấm "Áp dụng".
+  // Bản nháp cài đặt trong Drawer, chỉ ghi vào state thật khi bấm "Áp dụng".
   const [settings, setSettings] = useState<MapSettings>({
     showLabel: false,
     showStats: false,
+    enableZoom: false,
+    enablePan: false,
   });
   const [isOpenSetting, setIsOpenSetting] = useState(false);
   const user = useAuth((state) => state.user);
@@ -571,7 +574,18 @@ export default function SvgMapView({
     setLocationStyles(styles);
     setShowLabel(scrapbook.showLabel);
     setIsShowStats(scrapbook.showStats);
+    applyZoomPan(scrapbook.enableZoom, scrapbook.enablePan);
     onChange?.([...locations]);
+  };
+
+  /** Ghi cài đặt zoom/pan; vừa tắt cái nào thì đưa bản đồ về khung ban đầu, tránh kẹt ở mức zoom/vị trí không chỉnh lại được. */
+  const applyZoomPan = (zoom: boolean, pan: boolean) => {
+    if ((enableZoom && !zoom) || (enablePan && !pan)) {
+      setZoomLevel(1);
+      setResetKey((k) => k + 1);
+    }
+    setEnableZoom(zoom);
+    setEnablePan(pan);
   };
 
   /** Chưa đăng nhập thì hiện modal yêu cầu đăng nhập Google và trả về false. */
@@ -594,6 +608,13 @@ export default function SvgMapView({
 
   /** "Lưu": cần đăng nhập. Gửi scrapbook lên server (ảnh thumbnail gửi dạng file, backend tự upload Cloudinary). */
   const handleSave = async () => {
+    if (selectedLocations.length === 0) {
+      showToast({
+        message: "Chưa có thay đổi trên bản đồ",
+        severity: "warning",
+      });
+      return;
+    }
     if (!requireLogin()) return;
 
     showLoading();
@@ -602,6 +623,8 @@ export default function SvgMapView({
         locationCode,
         showLabel,
         showStats: isShowStats,
+        enableZoom,
+        enablePan,
         visitedStates: selectedLocations.map(
           ({ codename, name, visitedAt, areaStyle }) => ({
             codename,
@@ -624,7 +647,7 @@ export default function SvgMapView({
   /** Mở/đóng Drawer; khi mở thì sao chép cài đặt đang áp dụng vào bản nháp. */
   const toggleSettingSidebar = (isToggle: boolean) => {
     if (isToggle) {
-      setSettings({ showLabel, showStats: isShowStats });
+      setSettings({ showLabel, showStats: isShowStats, enableZoom, enablePan });
     }
     setIsOpenSetting(isToggle);
   };
@@ -634,16 +657,53 @@ export default function SvgMapView({
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  /** Ghi bản nháp cài đặt vào state thật và đóng Drawer. */
-  const handleApply = () => {
+  /** Ghi bản nháp cài đặt vào state thật, đóng Drawer; đã đăng nhập thì lưu cài đặt xuống DB. */
+  const handleApply = async () => {
     setShowLabel(settings.showLabel);
     setIsShowStats(settings.showStats);
+    applyZoomPan(settings.enableZoom, settings.enablePan);
     toggleSettingSidebar(false);
+
+    if (user) {
+      try {
+        // Không nạp lại scrapbook trả về để giữ các địa điểm chưa bấm "Lưu".
+        await saveScrapbookSettings(locationCode, settings);
+      } catch (error) {
+        console.error(error);
+        showToast({ message: "Không thể lưu cài đặt", severity: "error" });
+        return;
+      }
+    }
 
     showToast({
       message: "Áp dụng cài đặt thành công",
       severity: "success",
     });
+  };
+
+  /**
+   * Bộ lọc sự kiện của d3-zoom theo cài đặt zoom/pan: trả false thì d3-zoom bỏ
+   * qua sự kiện. Giữ quy tắc mặc định của react-simple-maps (bỏ Ctrl, chuột phải/giữa).
+   */
+  const filterZoomEvent = (event: Event) => {
+    const { ctrlKey, button } = event as MouseEvent;
+    if (ctrlKey || button) return false;
+
+    switch (event.type) {
+      case "wheel":
+      case "dblclick":
+      case "touchend": // double-tap: d3-zoom chuyển sang handler dblclick
+        return enableZoom;
+      case "mousedown":
+        return enablePan;
+      case "touchstart":
+        // 1 ngón = kéo, từ 2 ngón = pinch zoom
+        return (event as TouchEvent).touches.length > 1
+          ? enableZoom
+          : enablePan;
+      default:
+        return false;
+    }
   };
 
   // --- Giá trị dẫn xuất ---
@@ -820,8 +880,7 @@ export default function SvgMapView({
                   center={center}
                   minZoom={MIN_ZOOM}
                   maxZoom={MAX_ZOOM}
-                  // Trả false để d3-zoom bỏ qua mọi sự kiện zoom/pan (cuộn chuột, kéo, chạm, double-click).
-                  filterZoomEvent={disableZoom ? () => false : undefined}
+                  filterZoomEvent={filterZoomEvent}
                   onMove={({ zoom }) => zoom && setZoomLevel(zoom)}
                 >
                   <Geographies geography={geoData}>
@@ -1022,6 +1081,39 @@ export default function SvgMapView({
                   />
                 }
                 label={<Typography>Hiện thống kê</Typography>}
+              />
+            </Box>
+          </Box>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              Zoom/Pan
+            </Typography>
+            <Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={settings.enableZoom}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleUpdateSettings("enableZoom", e.target.checked)
+                    }
+                  />
+                }
+                label={<Typography>Cho phép zoom</Typography>}
+              />
+            </Box>
+            <Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={settings.enablePan}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleUpdateSettings("enablePan", e.target.checked)
+                    }
+                  />
+                }
+                label={<Typography>Cho phép pan</Typography>}
               />
             </Box>
           </Box>

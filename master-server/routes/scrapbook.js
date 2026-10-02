@@ -1,7 +1,12 @@
 const express = require("express");
 const multer = require("multer");
 const { requireAuth } = require("../middlewares/auth");
-const { getMyScrapbook, saveScrapbook, deleteScrapbook } = require("../controllers/scrapbook/scrapbook");
+const {
+    getMyScrapbook,
+    saveScrapbook,
+    updateMyScrapbookSettings,
+    deleteScrapbook,
+} = require("../controllers/scrapbook/scrapbook");
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -25,6 +30,7 @@ const router = express.Router();
 router.use(requireAuth);
 router.get("/", getMyScrapbook);
 router.post("/", handleUpload, saveScrapbook);
+router.patch("/settings", updateMyScrapbookSettings);
 router.delete("/:id", deleteScrapbook);
 
 module.exports = router;

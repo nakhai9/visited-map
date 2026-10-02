@@ -281,7 +281,7 @@ export default function LocationModalContent({
             color="error"
             onClick={() => submit(false)}
           >
-            Bỏ đã đến
+            Bỏ ghim
           </BaseButton>
         )}
         <BaseButton

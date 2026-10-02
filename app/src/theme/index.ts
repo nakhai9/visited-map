@@ -60,7 +60,7 @@ const theme = createTheme({
       hover: TOKENS.hover,
       selected: TOKENS.selected,
       disabled: TOKENS.textDisabled,
-      disabledBackground: TOKENS.surface,
+      disabledBackground: TOKENS.disabledBackground,
     },
   },
   typography: {
@@ -141,6 +141,8 @@ const theme = createTheme({
           "&:hover .MuiOutlinedInput-notchedOutline": {
             borderColor: TOKENS.borderStrong,
           },
+          // nền trắng ở trên áp cho cả lúc disabled, nên phải ghi đè riêng
+          "&.Mui-disabled": { backgroundColor: TOKENS.disabledBackground },
         },
         input: { paddingBlock: 11 },
       },

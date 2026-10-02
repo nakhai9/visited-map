@@ -38,7 +38,7 @@ export default function BaseToast({
     >
       <Alert
         variant="filled"
-        severity={"success"}
+        severity={properties?.severity ?? "success"}
         onClose={hideToast}
         elevation={6}
         sx={{ width: "100%", alignItems: "center" }}

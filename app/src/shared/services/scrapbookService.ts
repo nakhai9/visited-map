@@ -16,19 +16,23 @@ export type ScrapbookLocation = {
   areaStyle: ScrapbookAreaStyle;
 };
 
-export type Scrapbook = {
+/** Cài đặt hiển thị của bản đồ, lưu theo scrapbook. */
+export type ScrapbookSettings = {
+  showLabel: boolean;
+  showStats: boolean;
+  enableZoom: boolean;
+  enablePan: boolean;
+};
+
+export type Scrapbook = ScrapbookSettings & {
   id: number;
   locationCode: string;
   title: string | null;
-  showLabel: boolean;
-  showStats: boolean;
   visitedStates: ScrapbookLocation[];
 };
 
-export type SaveScrapbookInput = {
+export type SaveScrapbookInput = ScrapbookSettings & {
   locationCode: string;
-  showLabel: boolean;
-  showStats: boolean;
   visitedStates: ScrapbookLocation[];
 };
 
@@ -44,7 +48,7 @@ const toDateOnly = (value: string) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
-async function authHeaders(): Promise<HeadersInit> {
+async function authHeaders(): Promise<Record<string, string>> {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error("Chưa đăng nhập");
   return { Authorization: `Bearer ${token}` };
@@ -100,7 +104,12 @@ export async function saveScrapbook(
     "payload",
     JSON.stringify({
       locationCode: input.locationCode,
-      settings: { showLabel: input.showLabel, showStats: input.showStats },
+      settings: {
+        showLabel: input.showLabel,
+        showStats: input.showStats,
+        enableZoom: input.enableZoom,
+        enablePan: input.enablePan,
+      },
       visitedStates,
     }),
   );
@@ -110,6 +119,25 @@ export async function saveScrapbook(
     method: "POST",
     headers: await authHeaders(),
     body: formData,
+  });
+  return parseResponse<Scrapbook>(response);
+}
+
+/**
+ * Chỉ lưu cài đặt hiển thị, không đụng tới danh sách địa điểm. Backend tự tạo
+ * scrapbook rỗng nếu user chưa có scrapbook cho bản đồ này.
+ */
+export async function saveScrapbookSettings(
+  locationCode: string,
+  settings: ScrapbookSettings,
+): Promise<Scrapbook> {
+  const response = await fetch(`${SYSTEM_APIS.scrapbooks}/settings`, {
+    method: "PATCH",
+    headers: {
+      ...(await authHeaders()),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ locationCode, settings }),
   });
   return parseResponse<Scrapbook>(response);
 }
