@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import HeroSection from "../../components/HeroSection";
 import { type StateEvent } from "../../components/mapView/constants";
 import SvgMapView from "../../components/mapView/SvgMapView";
-import BaseSelect from "../../shared/components/BaseSelect";
+import BaseAutocomplete from "../../shared/components/BaseAutocomplete";
 import Layout from "../container/Layout";
 import { DEFAULT_PATH, VIETNAM_LOCATIONS } from "./constant";
 
@@ -48,16 +48,15 @@ export default function MapViewPage() {
           display: "flex",
           justifyContent: "flex-end",
           my: 2,
-          // chừa chỗ cho AppBar sticky (64px) khi cuộn tới
           scrollMarginTop: 80,
         }}
       >
-        <BaseSelect
+        <BaseAutocomplete
           label="Tỉnh/thành phố"
           value={locationPath}
           options={LOCATION_OPTIONS}
           disabled={states.length > 0}
-          onChange={(e) => setLocationPath(e.target.value)}
+          onChange={setLocationPath}
           sx={{ minWidth: 220 }}
         />
       </Box>
