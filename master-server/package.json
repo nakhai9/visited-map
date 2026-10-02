@@ -24,6 +24,7 @@
     "mysql2": "^3.24.4",
     "nodemon": "^3.1.11",
     "sequelize": "^6.37.8",
-    "streamifier": "^0.1.1"
+    "streamifier": "^0.1.1",
+    "swagger-ui-express": "^5.0.1"
   }
 }

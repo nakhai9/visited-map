@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser")
+const swaggerUi = require("swagger-ui-express");
+const openApiSpec = require("./docs/openapi");
 
 const uploadRouter = require("./routes/upload");
 const checkHealthRouter = require("./routes/health");
@@ -35,6 +37,10 @@ app.get("/", (req, res) => {
 app.get("/api/hello", (req, res) => {
     res.json({ message: "Hello World" });
 });
+
+// Tài liệu API: Swagger UI tại /api-docs, spec JSON tại /api-docs.json
+app.get("/api-docs.json", (req, res) => res.json(openApiSpec));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec, { swaggerOptions: { persistAuthorization: true } }));
 
 app.use("/health", checkHealthRouter)
 app.use("/api/upload/", uploadRouter);
