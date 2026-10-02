@@ -19,8 +19,8 @@ import {
   Bookmark,
   Camera,
   MapPinned,
-  RotateCcw,
   Settings,
+  Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -37,9 +37,9 @@ import {
   ZoomableGroup,
 } from "react-simple-maps";
 import BaseButton from "../../shared/components/BaseButton";
+import { useLoading } from "../../shared/components/BaseLoading/loading";
 import { useModal } from "../../shared/components/BaseModal/modal";
 import { useToast } from "../../shared/components/BaseToast/toast";
-import { useLoading } from "../../shared/components/BaseLoading/loading";
 import { useAuth } from "../../shared/hooks/useAuth";
 import {
   fetchScrapbook,
@@ -65,15 +65,15 @@ type MapSettings = {
 };
 
 type SvgMapViewProps = {
-  /** Tên file trong `/public/countries/{countryCode}.json` (vd: "vn", "world"). */
-  countryCode: string;
-  /** Gọi mỗi khi danh sách tỉnh/quốc gia đã chọn thay đổi. */
+  /** Tên file trong `/public/countries/{locationCode}.json` (vd: "vn", "world"). */
+  locationCode: string;
+  /** Gọi mỗi khi danh sách tỉnh/thành phố đã chọn thay đổi. */
   onChange?: (states: StateEvent[]) => void;
   /** Tắt zoom in/out và pan (kéo) bản đồ. */
   disableZoom?: boolean;
 };
 
-/** GeoJSON FeatureCollection, mỗi feature mang thông tin của một tỉnh/quốc gia. */
+/** GeoJSON FeatureCollection, mỗi feature mang thông tin của một tỉnh/thành phố. */
 type GeoData = FeatureCollection<Geometry, LocationProperties>;
 
 // Hệ toạ độ nội bộ của SVG (viewBox). SVG tự co giãn theo khung chứa nên các
@@ -176,7 +176,7 @@ const rewindGeoData = (data: GeoData): GeoData => ({
  */
 export default function SvgMapView({
   onChange,
-  countryCode,
+  locationCode,
   disableZoom = false,
 }: SvgMapViewProps) {
   const theme = useTheme();
@@ -217,19 +217,17 @@ export default function SvgMapView({
 
   const ready = !!geoData;
 
-  /** Tải GeoJSON của quốc gia rồi chuẩn hoá chiều polygon trước khi lưu vào state. */
+  /** Tải GeoJSON của bản đồ đang chọn rồi chuẩn hoá chiều polygon trước khi lưu vào state. */
   const fetchGeoData = useCallback(async () => {
     try {
-      const response = await fetch(`/countries/${countryCode}.json`);
+      const response = await fetch(`/raw/${locationCode}.json`);
       if (!response.ok)
-        throw new Error(
-          `HTTP ${response.status} — /countries/${countryCode}.json`,
-        );
+        throw new Error(`HTTP ${response.status} — /raw/${locationCode}.json`);
       setGeoData(rewindGeoData(await response.json()));
     } catch (error) {
       console.error("Error", error);
     }
-  }, [countryCode]);
+  }, [locationCode]);
 
   // Khung bản đồ tự co theo hình dạng dữ liệu: `aspect` = rộng/cao (đã giới hạn),
   // từ đó suy ra chiều cao viewBox `mapHeight`. Projection Mercator được fit để
@@ -322,7 +320,7 @@ export default function SvgMapView({
   /** Click vào vùng: mở modal chọn đã đến + màu/thumbnail. */
   const handleClickLocation = (props: LocationProperties) => {
     showModal({
-      title: props.ten_tinh || props.name,
+      title: props.name || props.ten_tinh,
       maxWidth: "sm",
       content: (
         <LocationModalContent
@@ -601,7 +599,7 @@ export default function SvgMapView({
     showLoading();
     try {
       const saved = await saveScrapbook({
-        countryCode,
+        locationCode,
         showLabel,
         showStats: isShowStats,
         visitedStates: selectedLocations.map(
@@ -666,7 +664,7 @@ export default function SvgMapView({
     : 0;
 
   // Đơn vị hành chính hiển thị trong UI.
-  const unitLabel = countryCode === "world" ? "quốc gia" : "tỉnh/thành phố";
+  const unitLabel = "tỉnh/thành phố";
 
   // Danh sách nút thao tác, render thành cột nút nổi ở góc phải bản đồ.
   const MAP_ACTIONS = [
@@ -698,7 +696,7 @@ export default function SvgMapView({
       position: "right",
     },
     {
-      icon: RotateCcw,
+      icon: Trash2,
       onClick: handleReset,
       disabled: !hasChanges,
       color: "#ef4444",
@@ -707,7 +705,7 @@ export default function SvgMapView({
     },
   ];
 
-  // Đổi quốc gia: xoá dữ liệu cũ (hiện spinner), reset lựa chọn/zoom rồi tải lại.
+  // Đổi bản đồ: xoá dữ liệu cũ (hiện spinner), reset lựa chọn/zoom rồi tải lại.
   useEffect(() => {
     setGeoData(null);
     setSelectedLocations([]);
@@ -722,7 +720,7 @@ export default function SvgMapView({
     let cancelled = false;
     (async () => {
       try {
-        const scrapbook = await fetchScrapbook(countryCode);
+        const scrapbook = await fetchScrapbook(locationCode);
         if (!cancelled && scrapbook) applyScrapbook(scrapbook);
       } catch (error) {
         console.error(error);
@@ -734,7 +732,7 @@ export default function SvgMapView({
     };
     // applyScrapbook chỉ đọc geoData/onChange tại thời điểm gọi; chạy lại khi đổi user, bản đồ hoặc dữ liệu.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, geoData, countryCode]);
+  }, [user?.id, geoData, locationCode]);
 
   // Nạp sẵn âm thanh chụp ảnh; dọn dẹp khi unmount.
   useEffect(() => {
@@ -782,9 +780,9 @@ export default function SvgMapView({
               }}
             >
               {/* Truyền projection đã fit sẵn (hàm) nên react-simple-maps dùng nguyên,
-                không tự cấu hình lại. key theo countryCode để dựng lại khi đổi nước. */}
+                không tự cấu hình lại. key theo locationCode để dựng lại khi đổi nước. */}
               <ComposableMap
-                key={countryCode}
+                key={locationCode}
                 width={MAP_WIDTH}
                 height={mapHeight}
                 projection={projection}
@@ -843,11 +841,7 @@ export default function SvgMapView({
                             className={isSelected ? "selected" : undefined}
                             onClick={() => handleClickLocation(props)}
                             onMouseEnter={() =>
-                              setHoveredName(
-                                props.ten_tinh ||
-                                  props.name ||
-                                  "Chưa có dữ liệu",
-                              )
+                              setHoveredName(props.name || "Chưa có dữ liệu")
                             }
                             onMouseLeave={() => setHoveredName("")}
                             fill={fillOf(props.codename, isSelected)}
@@ -971,8 +965,7 @@ export default function SvgMapView({
               <Typography
                 sx={{ fontSize: 13, color: "#64748b", whiteSpace: "nowrap" }}
               >
-                {statsPercent}% tổng số{" "}
-                {countryCode === "world" ? "thế giới" : "tỉnh/thành phố"}
+                {statsPercent}% tổng số {unitLabel}
               </Typography>
             </Stack>
           </Paper>

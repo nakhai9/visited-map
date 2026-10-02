@@ -8,14 +8,14 @@ export type AdminFields = {
   area: string;
 };
 
-/** raw/34/px-*.geojson - cấp phường/xã. */
+/** raw/34/px-*.json - cấp phường/xã. */
 export const WARD_FIELDS: AdminFields = {
   name: "ten_xa",
   code: "ma_xa",
   area: "dtich_km2",
 };
 
-/** raw/34/vietnam.geojson - cấp tỉnh/thành. */
+/** raw/34/vietnam.json - cấp tỉnh/thành. */
 export const PROVINCE_FIELDS: AdminFields = {
   name: "ten_tinh",
   code: "ma_tinh",

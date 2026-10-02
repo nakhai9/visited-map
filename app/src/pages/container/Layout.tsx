@@ -1,6 +1,7 @@
-import { Box } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import type { ReactNode } from "react";
 import BaseAppBar from "../../shared/components/BaseAppBar";
+import BaseFooter from "../../shared/components/BaseFooter";
 import BaseLoading from "../../shared/components/BaseLoading/BaseLoading";
 import BaseModal from "../../shared/components/BaseModal/BaseModal";
 import BaseToast from "../../shared/components/BaseToast/BaseToast";
@@ -22,16 +23,19 @@ export default function Layout({ children }: LayoutProps) {
       }}
     >
       <BaseAppBar />
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-        }}
-      >
-        {children}
-      </Box>
+      <Container maxWidth="lg" sx={{ flex: 1 }}>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          {children}
+        </Box>
+      </Container>
+      <BaseFooter />
 
       <BaseToast />
       <BaseModal />

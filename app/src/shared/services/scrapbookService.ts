@@ -18,7 +18,7 @@ export type ScrapbookLocation = {
 
 export type Scrapbook = {
   id: number;
-  countryCode: string;
+  locationCode: string;
   title: string | null;
   showLabel: boolean;
   showStats: boolean;
@@ -26,7 +26,7 @@ export type Scrapbook = {
 };
 
 export type SaveScrapbookInput = {
-  countryCode: string;
+  locationCode: string;
   showLabel: boolean;
   showStats: boolean;
   visitedStates: ScrapbookLocation[];
@@ -60,10 +60,10 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
 /** Lấy scrapbook của user hiện tại cho một bản đồ; null nếu chưa có. */
 export async function fetchScrapbook(
-  countryCode: string,
+  locationCode: string,
 ): Promise<Scrapbook | null> {
   const response = await fetch(
-    `${SYSTEM_APIS.scrapbooks}?countryCode=${encodeURIComponent(countryCode)}`,
+    `${SYSTEM_APIS.scrapbooks}?locationCode=${encodeURIComponent(locationCode)}`,
     { headers: await authHeaders() },
   );
   return parseResponse<Scrapbook | null>(response);
@@ -99,7 +99,7 @@ export async function saveScrapbook(
   formData.append(
     "payload",
     JSON.stringify({
-      countryCode: input.countryCode,
+      locationCode: input.locationCode,
       settings: { showLabel: input.showLabel, showStats: input.showStats },
       visitedStates,
     }),
